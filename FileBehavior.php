@@ -136,7 +136,6 @@ class FileBehavior extends Behavior
         }
         return \Yii::getAlias(
             $this->storage 
-            . "/" . $this->owner->formName() 
             . '/' . $this->owner->primaryKey 
             . '_' . ($field == null ? $this->fileField : $field)
         );
