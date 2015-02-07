@@ -25,15 +25,20 @@ use \yii\helpers\HtmlPurifier;
  *
  * Usage:
  * Define this behavior in your ActiveRecord instance class.
- * public function behaviors() {
- *     return [
- *          ...,
+    public function behaviors() 
+    {
+        return [
             'fileBehavior' => [
-                'class' => FileBehavior::className(),
-                'fileField' => 'file',
+                'class' => \bariew\yii2Tools\FileBehavior::className(),
+                'fileField' => 'image',
+                'imageSettings' => [
+                    'thumb1' => ['method' => 'thumbnail', 'width' => 50, 'height' => 50],
+                    'thumb2' => ['method' => 'thumbnail', 'width' => 100, 'height' => 100],
+                    'thumb3' => ['method' => 'thumbnail', 'width' => 200, 'height' => 200],
+                ]
             ]
- *     ]
- * }
+        ];
+    }
  *
  *
  *
@@ -49,7 +54,7 @@ class FileBehavior extends Behavior
     public $storage = '@app/web/files';
 
     /**
-     * @var string owner required uploaded file field name (you don't need to make db field, only model attribute).
+     * @var string owner required uploaded file field name.
      */
     public $fileField;
 
@@ -58,6 +63,9 @@ class FileBehavior extends Behavior
      */
     public $pathCallback;
 
+    /**
+     * @var type array settings for saving image thumbs.
+     */
     public $imageSettings = [];
     
     /**
@@ -85,7 +93,7 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Moves attached file and sets db filename field.
+     * Saves attached file and sets db filename field, makes thumbnails.
      */
     public function afterSave()
     {
@@ -104,8 +112,7 @@ class FileBehavior extends Behavior
     }
 
     /**
-     * Removes attached owner file.
-     * @return bool
+     * Removes owner files.
      */
     public function afterDelete()
     {
@@ -175,6 +182,11 @@ class FileBehavior extends Behavior
         return file_exists($dir) || FileHelper::createDirectory($dir, 0775, true);
     }
     
+    /**
+     * Creates image copies processed with options
+     * @param string $name thumbnail name.
+     * @param array $options processing options.
+     */
     private function processImage($name, $options)
     {
         $originalPath = $this->getFilePath();
@@ -189,4 +201,4 @@ class FileBehavior extends Behavior
                 break;
         }
     }
-} 
+}

@@ -2,7 +2,7 @@
     "name": "bariew/yii2-tools",
     "description": "Tools for yii2 web development",
     "type": "helpers",
-    "keywords": ["tools", "helpers"],
+    "keywords": ["tools", "helpers", "yii2"],
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -11,7 +11,7 @@
         }
     ],
     "require"   : {
-        "php": ">=5.4.0"
+        "yiisoft/yii2-imagine": "~2.0@dev"
     },
     "autoload": {
         "psr-4": {
