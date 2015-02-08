@@ -39,11 +39,11 @@ use \yii\helpers\HtmlPurifier;
             ]
         ];
     }
- *
+ * For multiple upload just follow common rules (set rules maxFiles, set input name[] and set input multiple=>true):
+ * @see https://github.com/yiisoft/yii2/blob/master/docs/guide/input-file-upload.md
  *
  *
  * @author Pavel Bariev <bariew@yandex.ru>
- *
  * @property ActiveRecord $owner
  */
 class FileBehavior extends Behavior
@@ -68,6 +68,11 @@ class FileBehavior extends Behavior
      */
     public $imageSettings = [];
     
+    protected $fileName = '';
+    
+    protected $fileNumber = 0;
+    
+    
     /**
      * @inheritdoc
      */
@@ -86,28 +91,43 @@ class FileBehavior extends Behavior
      */
     public function beforeValidate()
     {
-        if (!$file = UploadedFile::getInstance($this->owner, $this->fileField)) {
+        if (
+            (!$files = UploadedFile::getInstance($this->owner, $this->fileField))
+            && (!$files = UploadedFile::getInstances($this->owner, $this->fileField))     
+        ) {
             return true;
         }
-        $this->owner->setAttribute($this->fileField, $file);
+        $this->fileName = $this->owner->getAttribute($this->fileField);
+        $this->owner->setAttribute($this->fileField, $files);
     }
 
+    
     /**
      * Saves attached file and sets db filename field, makes thumbnails.
      */
     public function afterSave()
     {
-        if (!$file = $this->owner->getAttribute($this->fileField)) {
+        
+        $files = $this->owner->getAttribute($this->fileField);
+        if (!$files) {
             return true;
+        } else if (!is_array($files)) {
+            $files = [$files];
         }
-        $this->owner->updateAttributes([
-            $this->fileField => HtmlPurifier::process($file->name)
-        ]);
-        $path = $this->getFilePath();
-        $this->createFilePath($path);
-        $file->saveAs($path);
-        foreach ($this->imageSettings as $name => $options) {
-            $this->processImage($name, $options);
+        
+        $oldFileCount = $this->getFileCount();
+        foreach ($files as $key => $file) {
+            $path = $this->getFilePath();
+            $this->createFilePath($path);
+            $this->fileNumber = $oldFileCount + $key;
+            $this->fileName = $this->fileNumber . '_' . HtmlPurifier::process($file->name);
+            if ($this->fileNumber == 0) {
+                $this->owner->updateAttributes([$this->fileField => $this->fileName]);
+            }
+            $file->saveAs($path . $this->fileName);
+            foreach ($this->imageSettings as $name => $options) {
+                $this->processImage($name, $options);
+            }    
         }
     }
 
@@ -116,11 +136,11 @@ class FileBehavior extends Behavior
      */
     public function afterDelete()
     {
-        $names = array_merge([null], array_keys($this->imageSettings));
-        foreach ($names as $name) {
-            $path = $this->getFilePath($name);
-            if (file_exists($path) && is_file($path)) {
-                unlink($path);
+        $fields = array_merge([null], array_keys($this->imageSettings));
+        foreach ($fields as $field) {
+            $path = $this->getFilePath($field);
+            if (file_exists($path) && is_dir($path)) {
+                FileHelper::removeDirectory($path);
             }
         }
     }
@@ -129,7 +149,7 @@ class FileBehavior extends Behavior
      * Gets file full path.
      * @return bool|mixed|string
      */
-    public function getFilePath($field = null)
+    public function getFilePath($field = null, $name = '')
     {
         if ($this->pathCallback) {
             return call_user_func([$this->owner, $this->pathCallback]);
@@ -137,17 +157,42 @@ class FileBehavior extends Behavior
         return \Yii::getAlias(
             $this->storage 
             . '/' . $this->owner->primaryKey 
-            . '_' . ($field == null ? $this->fileField : $field)
+            . '/' . ($field 
+                ? preg_replace('/[^-\w+]/', '', $field) 
+                : $this->fileField)
+            . '/' . $name
         );
+    }
+    
+    public function getFirstFileName()
+    {
+        return $this->owner->getAttribute($this->fileField);
+    }
+    
+    public function getFileCount()
+    {
+        return count($this->getFileList());
+    }
+    
+    public function getFileList($field = null)
+    {
+        $path = $this->getFilePath($field);
+        if (!file_exists($path) || !is_dir($path)) {
+            return [];
+        }
+        return array_diff(scandir($path), ['.', '..']);
     }
 
     /**
      * Shows file to the browser.
      * @throws NotFoundHttpException
      */
-    public function showFile($field = null)
+    public function showFile($field = null, $name = null)
     {
-        $file = $this->getFilePath($field);
+        if (!$name && (!$name = $this->getFirstFileName())) {
+            return false;
+        }
+        $file = $this->getFilePath($field, $name);
         if (!file_exists($file)) {
             throw new NotFoundHttpException;
         }
@@ -160,14 +205,17 @@ class FileBehavior extends Behavior
      * Sends file to user download.
      * @throws NotFoundHttpException
      */
-    public function sendFile($field = null)
+    public function sendFile($field = null, $name = null)
     {
-        $file = $this->getFilePath($field);
-        if (!file_exists($file)) {
+        if (!$name && (!$name = $this->getFirstFileName())) {
+            return false;
+        }
+        $file = $this->getFilePath($field, $name);
+        if (!$name || !file_exists($file)) {
             throw new NotFoundHttpException;
         }
         \Yii::$app->response->sendFile(
-            $file, $this->owner->getAttribute($this->fileField));
+            $file, $name);
     }
 
     /**
@@ -177,25 +225,25 @@ class FileBehavior extends Behavior
      */
     private function createFilePath($path)
     {
-        $dir = dirname($path);
-        return file_exists($dir) || FileHelper::createDirectory($dir, 0775, true);
+        return file_exists($path) || FileHelper::createDirectory($path, 0775, true);
     }
     
     /**
      * Creates image copies processed with options
-     * @param string $name thumbnail name.
+     * @param string $field thumbnail name.
      * @param array $options processing options.
      */
-    private function processImage($name, $options)
+    private function processImage($field, $options)
     {
-        $originalPath = $this->getFilePath();
-        $resultPath = $this->getFilePath($name);
+        $originalPath = $this->getFilePath() . $this->fileName;
+        $resultPath = $this->getFilePath($field);
+        $this->createFilePath($resultPath);
         switch ($options['method']) {
             case 'thumbnail' :
                 \yii\imagine\Image::thumbnail(
                     $originalPath, $options['width'], $options['height']
-                )->save($resultPath, [
-                    'format' => pathinfo($this->owner->getAttribute($this->fileField), \PATHINFO_EXTENSION)
+                )->save($resultPath . $this->fileName, [
+                    'format' => pathinfo($this->fileName, \PATHINFO_EXTENSION)
                 ]);
                 break;
         }
