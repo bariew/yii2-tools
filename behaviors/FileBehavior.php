@@ -12,8 +12,7 @@ use yii\base\Behavior;
 use yii\helpers\FileHelper;
 use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
-use \yii\helpers\HtmlPurifier;
-
+use yii\helpers\Html;
 /**
  * This is for saving model file.
  * It takes uploaded file from owner $fileField attribute
@@ -68,10 +67,11 @@ class FileBehavior extends Behavior
      */
     public $imageSettings = [];
     
+    public $files;
+    
     protected $fileName = '';
     
     protected $fileNumber = 0;
-    
     
     /**
      * @inheritdoc
@@ -80,6 +80,7 @@ class FileBehavior extends Behavior
     {
         return [
             ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
+            ActiveRecord::EVENT_AFTER_VALIDATE => 'afterValidate',
             ActiveRecord::EVENT_AFTER_INSERT => 'afterSave',
             ActiveRecord::EVENT_AFTER_UPDATE => 'afterSave',
             ActiveRecord::EVENT_AFTER_DELETE => 'afterDelete'
@@ -98,18 +99,24 @@ class FileBehavior extends Behavior
             return true;
         }
         $this->fileName = $this->owner->getAttribute($this->fileField);
+        if (!is_string($this->fileName)) {
+            $this->fileName = @$this->owner->oldAttributes[$this->fileField];
+        }
         $this->owner->setAttribute($this->fileField, $files);
     }
-
     
+    public function afterValidate()
+    {
+        $this->files = $this->owner->getAttribute($this->fileField);
+        $this->owner->setAttribute($this->fileField, $this->fileName);
+    }
+
     /**
      * Saves attached file and sets db filename field, makes thumbnails.
      */
     public function afterSave()
     {
-        
-        $files = $this->owner->getAttribute($this->fileField);
-        if (!$files) {
+        if (!$files = $this->files) {
             return true;
         } else if (!is_array($files)) {
             $files = [$files];
@@ -117,14 +124,14 @@ class FileBehavior extends Behavior
         
         $oldFileCount = $this->getFileCount();
         foreach ($files as $key => $file) {
-            $path = $this->getFilePath();
-            $this->createFilePath($path);
-            $this->fileNumber = $oldFileCount + $key;
-            $this->fileName = $this->fileNumber . '_' . HtmlPurifier::process($file->name);
+            $this->fileNumber = $oldFileCount + $key + 1;
+            $this->fileName = $this->fileNumber . '_' . $file->name;
             if ($this->fileNumber == 0) {
                 $this->owner->updateAttributes([$this->fileField => $this->fileName]);
             }
-            $file->saveAs($path . $this->fileName);
+            $path = $this->getFilePath(null, $this->fileName);
+            $this->createFilePath($path);
+            $file->saveAs($path);
             foreach ($this->imageSettings as $name => $options) {
                 $this->processImage($name, $options);
             }    
@@ -136,32 +143,45 @@ class FileBehavior extends Behavior
      */
     public function afterDelete()
     {
-        $fields = array_merge([null], array_keys($this->imageSettings));
-        foreach ($fields as $field) {
-            $path = $this->getFilePath($field);
+        foreach ($this->getAllFields() as $field) {
+            $path = $this->getFilePath($field, '');
             if (file_exists($path) && is_dir($path)) {
                 FileHelper::removeDirectory($path);
             }
         }
+    }
+    
+    protected function getAllFields()
+    {
+        return array_merge([null], array_keys($this->imageSettings));
     }
 
     /**
      * Gets file full path.
      * @return bool|mixed|string
      */
-    public function getFilePath($field = null, $name = '')
+    public function getFilePath($field = null, $name = null)
     {
         if ($this->pathCallback) {
             return call_user_func([$this->owner, $this->pathCallback]);
         }
+        if (($name === null) && (!$name = $this->getFirstFileName())) {
+            return false;
+        }
+        $storage = is_callable($this->storage)
+            ? call_user_func($this->storage) : $this->storage;
+        $field = $field ? '_' . preg_replace('/[^-\w]+/', '', $field) : '';
         return \Yii::getAlias(
-            $this->storage 
-            . '/' . $this->owner->primaryKey 
-            . '/' . ($field 
-                ? preg_replace('/[^-\w+]/', '', $field) 
-                : $this->fileField)
-            . '/' . $name
+            $storage 
+            . '/' . $this->fileField . $field
+            . '/' . preg_replace('/[^\.-\w]+/', '', $name)
         );
+    }
+    
+    public function getFileLink($field = null, $name = null)
+    {
+        $root = realpath(\Yii::getAlias('@webroot'));
+        return str_replace($root, '', $this->getFilePath($field, $name));
     }
     
     public function getFirstFileName()
@@ -171,16 +191,21 @@ class FileBehavior extends Behavior
     
     public function getFileCount()
     {
-        return count($this->getFileList());
+        if (!$files = $this->getFileList()) {
+            return 0;
+        }
+        $lastName = end($files);
+        return preg_match('/^(\d+)_.*$/', $lastName, $matches)
+            ? $matches[1] : count($files);
     }
     
     public function getFileList($field = null)
     {
-        $path = $this->getFilePath($field);
-        if (!file_exists($path) || !is_dir($path)) {
+        $dir = $this->getFilePath($field, '');
+        if (!file_exists($dir) || !is_dir($dir)) {
             return [];
         }
-        return array_diff(scandir($path), ['.', '..']);
+        return array_diff(scandir($dir), ['.', '..']);
     }
 
     /**
@@ -189,11 +214,8 @@ class FileBehavior extends Behavior
      */
     public function showFile($field = null, $name = null)
     {
-        if (!$name && (!$name = $this->getFirstFileName())) {
-            return false;
-        }
         $file = $this->getFilePath($field, $name);
-        if (!file_exists($file)) {
+        if (!file_exists($file) || !is_file($file)) {
             throw new NotFoundHttpException;
         }
         header('Content-Type: '. FileHelper::getMimeType($file), true);
@@ -214,8 +236,24 @@ class FileBehavior extends Behavior
         if (!$name || !file_exists($file)) {
             throw new NotFoundHttpException;
         }
-        \Yii::$app->response->sendFile(
-            $file, $name);
+        \Yii::$app->response->sendFile($file, $name);
+    }
+    
+    public function deleteFile($name = null)
+    {
+        foreach ($this->getAllFields() as $field) {
+            $path = $this->getFilePath($field, $name);
+            if (!$path || !is_file($path) || !file_exists($path)) {
+                continue;
+            }
+            unlink($path);
+        }
+        if ($name == $this->owner->getAttribute($this->fileField)
+           && ($files = $this->getFileList())     
+        ) {
+            $this->owner->updateAttributes([$this->fileField => reset($files)]);
+        }
+        return true;
     }
 
     /**
@@ -225,7 +263,8 @@ class FileBehavior extends Behavior
      */
     private function createFilePath($path)
     {
-        return file_exists($path) || FileHelper::createDirectory($path, 0775, true);
+        $dir = dirname($path);
+        return file_exists($dir) || FileHelper::createDirectory($dir, 0775, true);
     }
     
     /**
@@ -235,17 +274,32 @@ class FileBehavior extends Behavior
      */
     private function processImage($field, $options)
     {
-        $originalPath = $this->getFilePath() . $this->fileName;
-        $resultPath = $this->getFilePath($field);
+        $originalPath = $this->getFilePath(null, $this->fileName);
+        $resultPath = $this->getFilePath($field, $this->fileName);
         $this->createFilePath($resultPath);
         switch ($options['method']) {
             case 'thumbnail' :
                 \yii\imagine\Image::thumbnail(
                     $originalPath, $options['width'], $options['height']
-                )->save($resultPath . $this->fileName, [
+                )->save($resultPath, [
                     'format' => pathinfo($this->fileName, \PATHINFO_EXTENSION)
                 ]);
                 break;
         }
+    }
+    
+    public function validateImage($path)
+    {
+        return imagejpeg(imagecreatefromstring(file_get_contents($path)));
+    }
+    
+    public function getRemoveLink($url)
+    {
+        $data = json_encode([
+            \Yii::$app->request->csrfParam => \Yii::$app->request->getCsrfToken()
+        ]);
+        return Html::a(Html::tag('i', 'x', ['class' => 'btn']), $url, [
+            'onclick' => '$.post($(this).prop("href"), '.$data.'); return false'
+        ]);
     }
 }
