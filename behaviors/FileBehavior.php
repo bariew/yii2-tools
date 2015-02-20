@@ -63,7 +63,7 @@ class FileBehavior extends Behavior
     public $pathCallback;
 
     /**
-     * @var type array settings for saving image thumbs.
+     * @var array settings for saving image thumbs.
      */
     public $imageSettings = [];
     
@@ -123,10 +123,13 @@ class FileBehavior extends Behavior
         }
         
         $oldFileCount = $this->getFileCount();
+        /**
+         * @var UploadedFile $file
+         */
         foreach ($files as $key => $file) {
             $this->fileNumber = $oldFileCount + $key + 1;
             $this->fileName = $this->fileNumber . '_' . $file->name;
-            if ($this->fileNumber == 0) {
+            if ($this->fileNumber == 1) {
                 $this->owner->updateAttributes([$this->fileField => $this->fileName]);
             }
             $path = $this->getFilePath(null, $this->fileName);
@@ -238,7 +241,12 @@ class FileBehavior extends Behavior
         }
         \Yii::$app->response->sendFile($file, $name);
     }
-    
+
+    /**
+     * Deletes file and all thumbnails by name
+     * @param null $name
+     * @return bool
+     */
     public function deleteFile($name = null)
     {
         foreach ($this->getAllFields() as $field) {
@@ -287,19 +295,19 @@ class FileBehavior extends Behavior
                 break;
         }
     }
-    
-    public function validateImage($path)
+
+    /**
+     * Gets links for all model files.
+     * @param null $field
+     * @return array
+     */
+    public function linkList($field = null)
     {
-        return imagejpeg(imagecreatefromstring(file_get_contents($path)));
-    }
-    
-    public function getRemoveLink($url)
-    {
-        $data = json_encode([
-            \Yii::$app->request->csrfParam => \Yii::$app->request->getCsrfToken()
-        ]);
-        return Html::a(Html::tag('i', 'x', ['class' => 'btn']), $url, [
-            'onclick' => '$.post($(this).prop("href"), '.$data.'); return false'
-        ]);
+        $result = [];
+        foreach ($this->getFileList() as $path) {
+            $name = basename($path);
+            $result[$name] = $this->getFileLink($field, basename($path));
+        }
+        return $result;
     }
 }
