@@ -264,6 +264,24 @@ class FileBehavior extends Behavior
         return true;
     }
 
+    public function renameFile($name, $newName)
+    {
+        foreach ($this->getAllFields() as $field) {
+            $path = $this->getFilePath($field, $name);
+            $newPath = $this->getFilePath($field, $newName);
+            if (file_exists($newPath)) {
+                throw new \Exception("File {$newName} already exists");
+            }
+            rename($path, $newPath);
+        }
+        if ($name == $this->owner->getAttribute($this->fileField)
+            && ($files = $this->getFileList())
+        ) {
+            $this->owner->updateAttributes([$this->fileField => $newName]);
+        }
+        return true;
+    }
+
     /**
      * Generates path recursively.
      * @param string $path path to create.
