@@ -12,7 +12,6 @@ use yii\base\Behavior;
 use yii\helpers\FileHelper;
 use yii\web\NotFoundHttpException;
 use yii\web\UploadedFile;
-use yii\helpers\Html;
 /**
  * This is for saving model file.
  * It takes uploaded file from owner $fileField attribute
@@ -67,7 +66,7 @@ class FileBehavior extends Behavior
      */
     public $imageSettings = [];
     
-    public $files;
+    public $files = [];
     
     protected $fileName = '';
     
@@ -92,23 +91,31 @@ class FileBehavior extends Behavior
      */
     public function beforeValidate()
     {
+        $this->fileName = $this->owner->getAttribute($this->fileField);
+        if (!is_string($this->fileName)) {
+            $this->fileName = @$this->owner->oldAttributes[$this->fileField];
+        }
         if (
             (!$files = UploadedFile::getInstance($this->owner, $this->fileField))
             && (!$files = UploadedFile::getInstances($this->owner, $this->fileField))     
         ) {
             return true;
         }
-        $this->fileName = $this->owner->getAttribute($this->fileField);
-        if (!is_string($this->fileName)) {
-            $this->fileName = @$this->owner->oldAttributes[$this->fileField];
-        }
         $this->owner->setAttribute($this->fileField, $files);
     }
     
     public function afterValidate()
     {
-        $this->files = $this->owner->getAttribute($this->fileField);
+        if (!$files = $this->owner->getAttribute($this->fileField)) {
+            return true;
+        }
+        if (!is_array($files)) {
+            $files = [$files];
+        }
         $this->owner->setAttribute($this->fileField, $this->fileName);
+        if (current($files) instanceof UploadedFile) {
+            $this->files = $files;
+        }
     }
 
     /**
@@ -116,17 +123,11 @@ class FileBehavior extends Behavior
      */
     public function afterSave()
     {
-        if (!$files = $this->files) {
-            return true;
-        } else if (!is_array($files)) {
-            $files = [$files];
-        }
-        
         $oldFileCount = $this->getFileCount();
         /**
          * @var UploadedFile $file
          */
-        foreach ($files as $key => $file) {
+        foreach ($this->files as $key => $file) {
             $this->fileNumber = $oldFileCount + $key + 1;
             $this->fileName = $this->fileNumber . '_' . $file->name;
             if ($this->fileNumber == 1) {
