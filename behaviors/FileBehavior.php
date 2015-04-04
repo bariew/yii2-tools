@@ -123,6 +123,9 @@ class FileBehavior extends Behavior
      */
     public function afterSave()
     {
+        if (!$this->files) {
+            return true;
+        }
         $oldFileCount = $this->getFileCount();
         /**
          * @var UploadedFile $file
