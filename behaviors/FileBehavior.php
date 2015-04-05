@@ -165,6 +165,8 @@ class FileBehavior extends Behavior
 
     /**
      * Gets file full path.
+     * @param null $field
+     * @param null $name
      * @return bool|mixed|string
      */
     public function getFilePath($field = null, $name = null)
@@ -213,6 +215,14 @@ class FileBehavior extends Behavior
             return [];
         }
         return array_diff(scandir($dir), ['.', '..']);
+    }
+
+    public function getFilePositionLink($field = null, $position = 0)
+    {
+        $list = array_values($this->getFileList($field));
+        return isset($list[$position])
+            ? $this->getFileLink($field, $list[$position])
+            : null;
     }
 
     /**
