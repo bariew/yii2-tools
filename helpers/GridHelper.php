@@ -36,9 +36,9 @@ class GridHelper
             'attribute' => $attribute,
             'format' => 'raw',
             'value' => !$model->isNewRecord
-                ? $model->$method()[$model->$attribute]
+                ? @$model->$method()[$model->$attribute]
                 : function ($data) use ($method, $attribute) {
-                    return $data->$method()[$data->$attribute];
+                    return @$data->$method()[$data->$attribute];
                 },
             'filter' => $model->$method(),
             'visible' => $model->isAttributeSafe($attribute),
