@@ -24,14 +24,15 @@ class GridHelper
     }
 
     /**
-     * @param $attribute
      * @param ActiveRecord|bool $model
+     * @param $attribute
+     * @param array $options
      * @return array
      */
-    public static function listFormat($model, $attribute)
+    public static function listFormat($model, $attribute, $options = [])
     {
-        $method = $attribute.'List';
-        return [
+        $method = str_replace('_id', '', $attribute).'List';
+        return array_merge([
             'attribute' => $attribute,
             'format' => 'raw',
             'value' => !$model->isNewRecord
@@ -39,19 +40,22 @@ class GridHelper
                 : function ($data) use ($method, $attribute) {
                     return $data->$method()[$data->$attribute];
                 },
-            'filter' => $model->$method()
-        ];
+            'filter' => $model->$method(),
+            'visible' => $model->isAttributeSafe($attribute),
+        ], $options);
     }
 
-    public static function dateFormat($model, $attribute, $options = ['class' => 'form-control'])
+    public static function dateFormat($model, $attribute, $options = [], $pickerOptions = [])
     {
         $pickerOptions = array_merge([
-            'dateFormat' => 'php:Y-m-d',
-        ], compact('model', 'attribute', 'options'));
-        return [
+            'model' => $model,
             'attribute' => $attribute,
-            'format' => 'datetime',
+            'options' => ['class' => 'form-control'],
+        ], $pickerOptions);
+        return array_merge([
+            'attribute' => $attribute,
+            'format' => 'date',
             'filter' => DatePicker::widget($pickerOptions)
-        ];
+        ], $options);
     }
 }
