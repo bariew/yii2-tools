@@ -8,6 +8,7 @@
 
 namespace bariew\yii2Tools\helpers;
 use yii\db\ActiveRecord;
+use yii\helpers\Inflector;
 use yii\jui\DatePicker;
 
 class GridHelper
@@ -31,7 +32,7 @@ class GridHelper
      */
     public static function listFormat($model, $attribute, $options = [])
     {
-        $method = str_replace('_id', '', $attribute).'List';
+        $method = Inflector::camelize(str_replace('_id', '', $attribute).'List');
         return array_merge([
             'attribute' => $attribute,
             'format' => 'raw',

@@ -53,8 +53,14 @@ class MigrationHelper
      */
     public static function createForeignKeyName($table, $columns, $refTable)
     {
-        $columnName = implode('', (array) $columns);
-        return "fk_{$table}_{$refTable}_{$columnName}";
+        return "FK_{$table}_{$refTable}";
+    }
+
+    public static function addIndex($table, $columns, $unique = false)
+    {
+        return Yii::$app->db->createCommand()
+            ->createIndex($table .'_'.implode('-', $columns) . '_idx', $table, $columns, $unique)
+            ->execute();
     }
 
     /**
