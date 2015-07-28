@@ -56,10 +56,17 @@ class MigrationHelper
         return "FK_{$table}_{$refTable}";
     }
 
-    public static function addIndex($table, $columns, $unique = false)
+    public static function createIndex($table, $columns, $unique = false)
     {
         return Yii::$app->db->createCommand()
             ->createIndex($table .'_'.implode('-', $columns) . '_idx', $table, $columns, $unique)
+            ->execute();
+    }
+
+    public static function addPrimaryKey($table, $columns)
+    {
+        return Yii::$app->db->createCommand()
+            ->addPrimaryKey($table .'_pk', $table, $columns)
             ->execute();
     }
 
