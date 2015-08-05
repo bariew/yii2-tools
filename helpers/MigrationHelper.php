@@ -82,4 +82,30 @@ class MigrationHelper
         }
         return $data;
     }
+
+    /**
+     * Inserts new data into table or updates on duplicate key.
+     * @param string $tableName db table name
+     * @param array $columns db column names
+     * @param array $data data to insert
+     * @param string $db application connection name
+     * @return boolean whether operation is successful
+     */
+    public static function insertUpdate($tableName, $columns, $data, $db = 'db')
+    {
+        if (!$data) {
+            return false;
+        }
+        foreach ($data as $key => $row) {
+            $data[$key] = array_values($row);
+        }
+        $sql = \Yii::$app->$db->createCommand()->batchInsert($tableName, $columns, $data)->getSql();
+        $sql .= 'ON DUPLICATE KEY UPDATE ';
+        $values = [];
+        foreach ($columns as $column) {
+            $values[] = "{$column} = VALUES({$column})";
+        }
+        $sql .= implode($values, ', ');
+        return \Yii::$app->$db->createCommand($sql)->execute();
+    }
 }
