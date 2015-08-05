@@ -45,6 +45,20 @@ class MigrationHelper
     }
 
     /**
+     * Automatically names and creates foreign key.
+     * @param $table
+     * @param $columns
+     * @param $refTable
+     * @return int
+     * @throws \yii\db\Exception
+     */
+    public static function dropForeignKey($table, $columns, $refTable)
+    {
+        $name = self::createForeignKeyName($table, $columns, $refTable);
+        return Yii::$app->db->createCommand()->dropForeignKey($name, $table)->execute();
+    }
+
+    /**
      * Names new foreign key by convention.
      * @param $table
      * @param $columns
