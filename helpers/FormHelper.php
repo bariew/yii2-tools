@@ -13,11 +13,16 @@ use yii\db\ActiveRecord;
 
 class FormHelper
 {
+    /**
+     * Loads posted data into model relation models
+     * @param ActiveRecord $model
+     * @param $relationName
+     * @param $data
+     * @return array
+     */
     public static function loadRelation(ActiveRecord $model, $relationName, $data)
     {
-        /** @var ActiveRecord $relationClass */
         $relationClass = $model->getRelation($relationName)->modelClass;
-
         return static::loadMultiple(
             @$data[(new $relationClass())->formName()],
             $relationClass,
