@@ -49,12 +49,18 @@ class MigrationHelper
      * @param $table
      * @param $columns
      * @param $refTable
+     * @param $refColumns
      * @return int
      * @throws \yii\db\Exception
      */
-    public static function dropForeignKey($table, $columns, $refTable)
+    public static function dropForeignKey($table, $columns, $refTable, $refColumns)
     {
         $name = self::createForeignKeyName($table, $columns, $refTable);
+        $fks = Yii::$app->db->schema->getTableSchema($table)->foreignKeys;
+        $search = array_merge([$refTable], array_combine((array)$columns, (array)$refColumns));
+        if (!in_array($search, $fks)) {
+            return true;
+        }
         return Yii::$app->db->createCommand()->dropForeignKey($name, $table)->execute();
     }
 
