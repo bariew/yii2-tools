@@ -10,7 +10,7 @@ namespace bariew\yii2Tools\helpers;
 use yii\db\ActiveRecord;
 use yii\helpers\Inflector;
 use yii\jui\DatePicker;
-
+use Yii;
 class GridHelper
 {
     public static function columnSum($dataProvider, $attributes)
