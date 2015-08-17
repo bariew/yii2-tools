@@ -79,7 +79,7 @@ class MigrationHelper
     public static function createIndex($table, $columns, $unique = false)
     {
         return Yii::$app->db->createCommand()
-            ->createIndex($table .'_'.implode('-', $columns) . '_idx', $table, $columns, $unique)
+            ->createIndex($table .'_'.implode('-', (array) $columns) . '_idx', $table, $columns, $unique)
             ->execute();
     }
 
