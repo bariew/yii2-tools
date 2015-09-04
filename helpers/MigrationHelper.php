@@ -2,6 +2,7 @@
 
 namespace bariew\yii2Tools\helpers;
 use Yii;
+use yii\db\TableSchema;
 
 class MigrationHelper
 {
@@ -128,4 +129,76 @@ class MigrationHelper
         $sql .= implode($values, ', ');
         return \Yii::$app->$db->createCommand($sql)->execute();
     }
+
+    /**
+     * Finds all foreign keys in the table and related to the table column from outer tables.
+     * @param $tableName
+     * @return array ['inner'=>[], 'outer'=>[]]
+     */
+    public static function tableForeignKeys($tableName)
+    {
+        $result = ['inner' => [], 'outer' => []];
+        foreach (Yii::$app->db->schema->tableSchemas as $table) {
+            $foreignKeys = self::findConstraints($table);
+            /** @var TableSchema $table */
+            if ($table->name == $tableName) {
+                $result['inner'] = $foreignKeys;
+                continue;
+            }
+            foreach ($foreignKeys as $foreignKey) {
+                if ($foreignKey['ftable'] == $tableName) {
+                    $result['outer'][] = $foreignKey;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Collects the foreign key column details for the given table.
+     * @param TableSchema $table the table metadata
+     * @return array
+     */
+    protected static function findConstraints($table)
+    {
+        $result = [];
+        $sql = self::getCreateTableSql($table);
+
+        $regexp = '/CONSTRAINT\s+([^\(^\s]+)\s*FOREIGN KEY\s+\(([^\)]+)\)\s+REFERENCES\s+([^\(^\s]+)\s*\(([^\)]+)\)/mi';
+        if (preg_match_all($regexp, $sql, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $fks = array_map('trim', explode(',', str_replace('`', '', $match[2])));
+                $pks = array_map('trim', explode(',', str_replace('`', '', $match[4])));
+                $index = implode('_', $fks);
+                $result[$index] = [
+                    'name' => str_replace('`', '', $match[1]),
+                    'table' => $table->name,
+                    'column' => $fks,
+                    'ftable' => str_replace('`', '', $match[3]),
+                    'fcolumn' => $pks,
+                ];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Gets the CREATE TABLE sql string.
+     * @param TableSchema $table the table metadata
+     * @return string $sql the result of 'SHOW CREATE TABLE'
+     */
+    protected static function getCreateTableSql($table)
+    {
+        $db = Yii::$app->db;
+        $row = $db->createCommand('SHOW CREATE TABLE ' . $db->schema->quoteTableName($table->fullName))->queryOne();
+        if (isset($row['Create Table'])) {
+            $sql = $row['Create Table'];
+        } else {
+            $row = array_values($row);
+            $sql = $row[1];
+        }
+
+        return $sql;
+    }
+
 }

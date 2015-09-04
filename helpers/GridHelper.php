@@ -13,6 +13,8 @@ use yii\jui\DatePicker;
 use Yii;
 class GridHelper
 {
+    private static $lists = [];
+
     public static function columnSum($dataProvider, $attributes)
     {
         $result = 0;
@@ -33,16 +35,47 @@ class GridHelper
     public static function listFormat($model, $attribute, $options = [])
     {
         $method = Inflector::camelize(str_replace('_id', '', $attribute).'List');
+        $key = get_class($model).$attribute;
+        $list = static::$lists[$key] = isset(static::$lists[$key]) ? static::$lists[$key] : $model->$method();
         return array_merge([
             'attribute' => $attribute,
             'format' => 'raw',
             'value' => !$model->isNewRecord
-                ? @$model->$method()[$model->$attribute]
-                : function ($data) use ($method, $attribute) {
-                    return @$data->$method()[$data->$attribute];
+                ? @$list[$model->$attribute]
+                : function ($data) use ($list, $attribute) {
+                    return @$list[$data->$attribute];
                 },
-            'filter' => $model->$method(),
+            'filter' => $list,
             'visible' => $model->isAttributeSafe($attribute),
+        ], $options);
+    }
+
+    /**
+     * @param ActiveRecord|bool $model
+     * @param $attribute
+     * @param array $options
+     * @return array
+     * @throws \Exception
+     */
+    public static function viaListFormat($model, $attribute, $options = [])
+    {
+        $relation = $model->getRelation($attribute);
+        $relationClass = $relation->modelClass;
+        $columns = Yii::$app->db->getTableSchema($relationClass::tableName())->columnNames;
+        $titles = array_intersect(['title', 'name', 'username'], $columns);
+        if (!$title = reset($titles)) {
+            throw new \Exception(Yii::t('app', 'Relation does not have any title column'));
+        }
+        return array_merge([
+            'attribute' => $attribute,
+            'format' => 'raw',
+            'value' => !$model->isNewRecord
+                ? implode(', ', $relation->select($title)->column())
+                : function ($data) use ($attribute, $title) {
+                    return implode(', ', $data->getRelation($attribute)->select($title)->column());
+                },
+            //'filter' => $model->$method(),
+            //'visible' => $model->isAttributeSafe($attribute),
         ], $options);
     }
 
