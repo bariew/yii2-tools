@@ -1,16 +1,20 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 05.08.15
- * Time: 17:25
+ * FormHelper class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
 namespace bariew\yii2Tools\helpers;
 use yii\base\Model;
 use yii\db\ActiveRecord;
 
-
+/**
+ * Helps with form processing.
+ *
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class FormHelper
 {
     /**
