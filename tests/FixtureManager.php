@@ -28,6 +28,7 @@ class FixtureManager
     private static $modelPath = '@app/modules';
 
     /**
+     * Sets attributes
      * @param array $config
      * @return FixtureManager
      */
@@ -40,6 +41,12 @@ class FixtureManager
         return new static();
     }
 
+    /**
+     * Gets data from cache or database
+     * Truncates tables
+     * @return \self
+     * @throws \yii\db\Exception
+     */
     public static function init()
     {
         if ($data = \Yii::$app->cache->get(static::$cacheKey)) {
@@ -73,8 +80,14 @@ class FixtureManager
         }
         static::update();
         MigrationHelper::setForeignKeyCheck();
+        return new static();
     }
 
+    /**
+     * @param $table
+     * @param bool $index
+     * @return mixed
+     */
     public static function get($table, $index = false)
     {
         if (static::$data === null) {
@@ -84,11 +97,17 @@ class FixtureManager
         return ($index === false) ? reset($data) : $data[$index];
     }
 
+    /**
+     * Updates cache
+     */
     public static function update()
     {
         \Yii::$app->cache->set(static::$cacheKey, serialize(static::$data));
     }
 
+    /**
+     * Resets data
+     */
     public static function reset()
     {
         \Yii::$app->cache->delete(static::$cacheKey);
