@@ -27,6 +27,16 @@ class GridHelper
     }
 
     /**
+     * Gets model method name returning available values list for the attribute.
+     * @param $attribute
+     * @return string
+     */
+    public static function listName($attribute)
+    {
+        return Inflector::camelize(str_replace('_id', '', $attribute).'List');
+    }
+
+    /**
      * @param ActiveRecord|bool $model
      * @param $attribute
      * @param array $options
@@ -34,9 +44,11 @@ class GridHelper
      */
     public static function listFormat($model, $attribute, $options = [])
     {
-        $method = Inflector::camelize(str_replace('_id', '', $attribute).'List');
+        $method = static::listName($attribute);
         $key = get_class($model).$attribute;
-        $list = static::$lists[$key] = isset(static::$lists[$key]) ? static::$lists[$key] : $model->$method();
+        $list = static::$lists[$key] = isset(static::$lists[$key])
+            ? static::$lists[$key]
+            : $model->$method();
         return array_merge([
             'attribute' => $attribute,
             'format' => 'raw',
