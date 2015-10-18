@@ -8,13 +8,15 @@
 
 namespace bariew\yii2Tools\helpers;
 use yii\helpers\Html;
+use yii\widgets\ActiveForm;
 
 class HtmlHelper
 {
-    public static function submitDropdown($model, $attribute, $items, $content = "Save", $options = [])
+    public static function submitDropdown(ActiveForm $form, $model, $attribute, $items, $content = "Save", $options = [])
     {
         if (count($items) == 1) {
-            return Html::hiddenInput(Html::getInputName($model, $attribute), key($items))
+            return $form->field($model, $attribute, ['options'=>['class' => 'pull-left']])
+                ->label(false)->hiddenInput(['value' => key($items)])
                 . Html::submitButton(reset($items), $options);
         }
         $lis = '';
@@ -26,7 +28,7 @@ class HtmlHelper
         }
 
         return Html::beginTag('div', ['class' => 'btn-group'])
-                . Html::activeHiddenInput($model, $attribute)
+                . $form->field($model, $attribute, ['options'=>['class' => 'pull-left']])->label(false)->hiddenInput()
                 . Html::button($content . '<span class="caret"></span>',
                     ['class' => 'btn dropdown-toggle btn-primary', "data-toggle"=>"dropdown"])
                 . Html::beginTag('ul', ['class'=>'dropdown-menu'])
