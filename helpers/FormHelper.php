@@ -54,4 +54,18 @@ class FormHelper
         }
         return $result;
     }
+
+    /**
+     * Emulates file uploading with existing file.
+     * @param $model
+     * @param $attribute
+     * @param array $options =
+     * ['name' => 'file.jpg', 'type' => 'image/jpeg', 'tmp_name' => '/tmp/asdZXC', 'error' => 0, 'size' => 123123]
+     */
+    public static function setUploadedFile(Model $model, $attribute, $options = [])
+    {
+        foreach ($options as $name => $value) {
+            $_FILES[$model->formName()][$name][$attribute] = $value;
+        }
+    }
 }
