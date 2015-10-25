@@ -86,7 +86,7 @@ class GridHelper
                 : function ($data) use ($attribute, $title) {
                     return implode(', ', $data->getRelation($attribute)->select($title)->column());
                 },
-            //'filter' => $model->$method(),
+            'filter' => false,
             //'visible' => $model->isAttributeSafe($attribute),
         ], $options);
     }
