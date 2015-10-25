@@ -21,10 +21,11 @@ class HtmlHelper
         }
         $lis = '';
         foreach ($items as $key => $name) {
-            $lis .= Html::tag('li', "<a href='#'>$name</a>", ['onclick' => "
-                $(this).closest('div').find('input').val('{$key}');
-                $(this).parents('form').submit();
-            "]);
+            $lis .= Html::tag('li', "<a href='#'>$name</a>", [
+                'onclick' => "$(this).closest('div').find('input').val('{$key}');
+                    $(this).parents('form').submit();",
+                'class' => $model->$attribute == $key ? 'active' : ''
+            ]);
         }
 
         return Html::beginTag('div', ['class' => 'btn-group'])
