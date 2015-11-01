@@ -68,11 +68,10 @@ class FixtureManager
                 if (isset($models[$table])) {
                     $class = $models[$table];
                     /** @var \yii\db\ActiveRecord $model */
-                        $model = new $class($values);
-                        static::$data[$table][$key] = $model->hasAttribute('id')
-                            ? $model::find()->orderBy(['id' => SORT_DESC])->one()
-                            : new $model;
-
+                    $model = new $class($values);
+                    static::$data[$table][$key] = $model->hasAttribute('id')
+                        ? $model::find()->orderBy(['id' => SORT_DESC])->one()
+                        : new $model;
                 } else {
                     static::$data[$table][$key] = $values;
                 }

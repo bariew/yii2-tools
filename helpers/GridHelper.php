@@ -1,9 +1,8 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 25.06.15
- * Time: 19:11
+ * GridHelper class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
 namespace bariew\yii2Tools\helpers;
@@ -11,10 +10,26 @@ use yii\db\ActiveRecord;
 use yii\helpers\Inflector;
 use yii\jui\DatePicker;
 use Yii;
+use yii\base\Model;
+
+/**
+ * Helper for GridView, GridList fields display.
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class GridHelper
 {
+    /**
+     * @var array model attribute lists values caching
+     */
     private static $lists = [];
 
+    /**
+     * Gets sum for GridList model attribute
+     * @param $dataProvider
+     * @param $attributes
+     * @return int
+     */
     public static function columnSum($dataProvider, $attributes)
     {
         $result = 0;
@@ -37,6 +52,7 @@ class GridHelper
     }
 
     /**
+     * Renders Grid column for list value
      * @param ActiveRecord|bool $model
      * @param $attribute
      * @param array $options
@@ -63,6 +79,7 @@ class GridHelper
     }
 
     /**
+     * Renders grid column for list value of via table data
      * @param ActiveRecord|bool $model
      * @param $attribute
      * @param array $options
@@ -91,6 +108,15 @@ class GridHelper
         ], $options);
     }
 
+    /**
+     * Renders Date format Grid column
+     * @param $model
+     * @param $attribute
+     * @param array $options
+     * @param array $pickerOptions
+     * @return array
+     * @throws \Exception
+     */
     public static function dateFormat($model, $attribute, $options = [], $pickerOptions = [])
     {
         $pickerOptions = array_merge([
@@ -103,5 +129,47 @@ class GridHelper
             'format' => 'date',
             'filter' => DatePicker::widget($pickerOptions)
         ], $options);
+    }
+
+    /**
+     * Creates array of replacements for {{modelName_attribute}} placeholders.
+     * @param Model[] $models
+     * @param array $attributes
+     * @param bool $preview
+     * @return array
+     *
+     * @example this will add '{{mymodel_title}} | title' string to the detail view
+        \yii\widgets\DetailView::widget([
+            'model' => false,
+            'attributes' => GridHelper::variableReplacements([], ['\MyModel' => ['title']], true),
+        ])
+     * @example This will make an array ["{{mymodel_title}}" => "Hello"]
+     * where Hello is the title of \MyModel instance from $models
+     * $replacements = GridHelper::variableReplacements($models, ['\MyModel' => ['title']], true)
+     */
+    public static function variableReplacements(array $models, array $attributes, $preview = false)
+    {
+        $result = [];
+        if (!$models) {
+            array_walk($attributes, function ($v, $class) use (&$models) {
+                $models[] = new $class();
+            });
+        }
+        foreach ($models as $model) {
+            if (!is_object($model)) {
+                continue;
+            }
+            $class = get_class($model);
+            foreach ($attributes[$class] as $attribute) {
+                $formName = str_replace(['app\modules', 'models', '\\'], ['','_',''], $class);
+                $key = strtolower('{{'.$formName.'_'.$attribute.'}}');
+                if ($preview) {
+                    $result[] = ['label' => $key, 'value' => $model->getAttributeLabel($attribute)];
+                } else {
+                    $result[$key] = $model->$attribute;
+                }
+            }
+        }
+        return $result;
     }
 }

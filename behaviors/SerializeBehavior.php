@@ -31,7 +31,7 @@ class SerializeBehavior extends Behavior
     const TYPE_PHP = 'php';
 
     public $attributes = [];
-    public $type = 'json';
+    public $type = self::TYPE_JSON;
 
     /**
      * @inheritdoc
