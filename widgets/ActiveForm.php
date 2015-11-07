@@ -1,16 +1,21 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 22.09.15
- * Time: 16:28
+ * ActiveForm class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
-
 namespace bariew\yii2Tools\widgets;
 
 
 use yii\helpers\Html;
 
+/**
+ * This active form will not echo form beginning if you don't want.
+ * For using ActiveForm functionality without echo.
+ *
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class ActiveForm extends \yii\widgets\ActiveForm
 {
     public $init = true;
