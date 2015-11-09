@@ -1,10 +1,10 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * FileBehavior class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
+
 namespace bariew\yii2Tools\behaviors;
 
 use yii\db\ActiveRecord;
@@ -101,9 +101,12 @@ class FileBehavior extends Behavior
         ) {
             return true;
         }
-        $this->owner->setAttribute($this->fileField, $files);
+        return $this->owner->setAttribute($this->fileField, $files);
     }
-    
+
+    /**
+     * @return bool
+     */
     public function afterValidate()
     {
         if (!$files = $this->owner->getAttribute($this->fileField)) {
@@ -116,6 +119,7 @@ class FileBehavior extends Behavior
         if (current($files) instanceof UploadedFile) {
             $this->files = $files;
         }
+        return true;
     }
 
     /**
@@ -157,7 +161,11 @@ class FileBehavior extends Behavior
             }
         }
     }
-    
+
+    /**
+     *
+     * @return array
+     */
     protected function getAllFields()
     {
         return array_merge([null], array_keys($this->imageSettings));
@@ -186,18 +194,32 @@ class FileBehavior extends Behavior
             . '/' . preg_replace('/[^\.-\w]+/', '', $name)
         );
     }
-    
+
+    /**
+     * Gets url to file
+     * @param null $field
+     * @param null $name
+     * @return mixed
+     */
     public function getFileLink($field = null, $name = null)
     {
         $root = realpath(\Yii::getAlias('@webroot'));
         return str_replace($root, '', $this->getFilePath($field, $name));
     }
-    
+
+    /**
+     * Name of first file
+     * @return mixed
+     */
     public function getFirstFileName()
     {
         return $this->owner->getAttribute($this->fileField);
     }
-    
+
+    /**
+     * Count of files
+     * @return int
+     */
     public function getFileCount()
     {
         if (!$files = $this->getFileList()) {
@@ -207,7 +229,12 @@ class FileBehavior extends Behavior
         return preg_match('/^(\d+)_.*$/', $lastName, $matches)
             ? $matches[1] : count($files);
     }
-    
+
+    /**
+     * All files list for field
+     * @param null $field
+     * @return array
+     */
     public function getFileList($field = null)
     {
         $dir = $this->getFilePath($field, '');
@@ -217,6 +244,12 @@ class FileBehavior extends Behavior
         return array_diff(scandir($dir), ['.', '..']);
     }
 
+    /**
+     * Url to a file from list
+     * @param null $field
+     * @param int $position
+     * @return mixed|null
+     */
     public function getFilePositionLink($field = null, $position = 0)
     {
         $list = array_values($this->getFileList($field));
@@ -242,6 +275,9 @@ class FileBehavior extends Behavior
 
     /**
      * Sends file to user download.
+     * @param null $field
+     * @param null $name
+     * @return bool
      * @throws NotFoundHttpException
      */
     public function sendFile($field = null, $name = null)
@@ -278,6 +314,13 @@ class FileBehavior extends Behavior
         return true;
     }
 
+    /**
+     * Renames file
+     * @param $name
+     * @param $newName
+     * @return bool
+     * @throws \Exception
+     */
     public function renameFile($name, $newName)
     {
         foreach ($this->getAllFields() as $field) {

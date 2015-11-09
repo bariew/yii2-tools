@@ -1,17 +1,28 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 01.11.15
- * Time: 13:32
+ * Item class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
 namespace bariew\yii2Tools\helpers;
 use yii\base\Event;
 use yii\db\ActiveRecord;
 
+/**
+ * See README
+ *
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class EventHelper
 {
+    /**
+     * Checks whether event sender attribute is changed.
+     * @param Event $event
+     * @param $attribute
+     * @return bool
+     */
     public static function isAttributeChanged(Event $event, $attribute)
     {
         /** @var ActiveRecord $sender */

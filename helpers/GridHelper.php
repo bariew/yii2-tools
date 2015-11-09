@@ -138,12 +138,12 @@ class GridHelper
      * @param bool $preview
      * @return array
      *
-     * @example this will add '{{mymodel_title}} | title' string to the detail view
+     * @example this will add '{{myModel_title}} | title' string to the detail view
         \yii\widgets\DetailView::widget([
             'model' => false,
             'attributes' => GridHelper::variableReplacements([], ['\MyModel' => ['title']], true),
         ])
-     * @example This will make an array ["{{mymodel_title}}" => "Hello"]
+     * @example This will make an array ["{{myModel_title}}" => "Hello"]
      * where Hello is the title of \MyModel instance from $models
      * $replacements = GridHelper::variableReplacements($models, ['\MyModel' => ['title']], true)
      */

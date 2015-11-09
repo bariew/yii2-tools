@@ -18,6 +18,9 @@ use yii\helpers\Html;
  */
 class ActiveForm extends \yii\widgets\ActiveForm
 {
+    /**
+     * @var bool whether to echo form tag.
+     */
     public $init = true;
     /**
      * Initializes the widget.

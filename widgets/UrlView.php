@@ -9,7 +9,7 @@ namespace bariew\yii2Tools\widgets;
 
 /**
  * This widget just runs app controller action an returns its response.
- * You may, for example, use it with rbac to deniy rendering some parts of view.
+ * You may, for example, use it with rbac to deny rendering some parts of view.
  *
  * @author Pavel Bariev <bariew@yandex.ru>
  */
@@ -17,7 +17,10 @@ class UrlView extends \yii\base\Widget
 {
     public $params = [];
     public $url;
-    
+
+    /**
+     * @inheritdoc
+     */
     public function run()
     {
         try {

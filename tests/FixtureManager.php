@@ -114,6 +114,10 @@ class FixtureManager
         static::init();
     }
 
+    /**
+     * Gets all models data [tableName => ClassName]
+     * @return array
+     */
     private static function getModels()
     {
         $result = [];

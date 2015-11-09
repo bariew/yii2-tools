@@ -1,10 +1,21 @@
 <?php
+/**
+ * ListValidator class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
+ */
+
 namespace bariew\yii2Tools\validators;
 
-use yii\base\Exception;
 use yii\helpers\Inflector;
 use yii\validators\Validator;
 
+/**
+ * See README
+ *
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class ListValidator extends Validator
 {
     /**

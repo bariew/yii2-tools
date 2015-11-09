@@ -1,5 +1,4 @@
 <?php
-
 /**
  * FileDeleteAction class file.
  * @copyright (c) 2015, Pavel Bariev
@@ -11,7 +10,7 @@ use yii\base\Action;
 use Yii;
 
 /**
- * Description of FileDeleteAction
+ * See README
  *
  * @author Pavel Bariev <bariew@yandex.ru>
  */
@@ -23,7 +22,6 @@ class FileRenameAction extends Action
      * @param integer $id owner Item model id.
      * @param string $name file name.
      * @return \yii\web\Response
-     * @throws NotFoundHttpException
      */
     public function run($id, $name)
     {

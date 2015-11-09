@@ -34,6 +34,13 @@ class FormHelper
         );
     }
 
+    /**
+     * Inserts data into multiple models.
+     * @param $data
+     * @param $modelClass
+     * @param array $models
+     * @return array
+     */
     public static function loadMultiple($data, $modelClass, $models = [])
     {
         $result = ['models' => $models, 'errors' => []];

@@ -1,9 +1,8 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 18.10.15
- * Time: 12:52
+ * ListAction class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
 namespace bariew\yii2Tools\actions;
@@ -12,19 +11,39 @@ namespace bariew\yii2Tools\actions;
 use bariew\yii2Tools\helpers\GridHelper;
 use yii\base\Action;
 use Yii;
+use yii\base\Exception;
 use yii\helpers\Html;
 use yii\web\Response;
 use yii\db\ActiveRecord;
 
+/**
+ * See README
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class ListAction extends Action
 {
     const RESPONSE_DEPDROP = 'DepDrop';
     const RESPONSE_HTML = 'html';
 
+    /**
+     * @var string model attribute
+     */
     public $listAttribute;
+
+    /**
+     * @var array posted attribute names
+     */
     public $postAttributes = [];
+
+    /**
+     * @var string response type
+     */
     public $response = self::RESPONSE_DEPDROP;
 
+    /**
+     * @inheritdoc
+     */
     public function run()
     {
         switch($this->response) {
@@ -52,6 +71,7 @@ class ListAction extends Action
             case static::RESPONSE_HTML:
                 return Html::activeDropDownList($model, $this->listAttribute, $list);
                 break;
+            default: throw new Exception('Undefined list type');
         }
     }
 }

@@ -1,9 +1,20 @@
 <?php
+/**
+ * MigrationHelper class file.
+ * @copyright (c) 2015, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
+ */
 
 namespace bariew\yii2Tools\helpers;
 use Yii;
 use yii\db\TableSchema;
 
+/**
+ * See README
+ *
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class MigrationHelper
 {
 
@@ -77,6 +88,14 @@ class MigrationHelper
         return "FK_{$table}_{$refTable}";
     }
 
+    /**
+     * Creates index with common name.
+     * @param $table
+     * @param $columns
+     * @param bool $unique
+     * @return int
+     * @throws \yii\db\Exception
+     */
     public static function createIndex($table, $columns, $unique = false)
     {
         return Yii::$app->db->createCommand()
@@ -84,6 +103,13 @@ class MigrationHelper
             ->execute();
     }
 
+    /**
+     * Adds PK with common name
+     * @param $table
+     * @param $columns
+     * @return int
+     * @throws \yii\db\Exception
+     */
     public static function addPrimaryKey($table, $columns)
     {
         return Yii::$app->db->createCommand()
@@ -92,6 +118,7 @@ class MigrationHelper
     }
 
     /**
+     * Merges array sub-arrays with another array which data is common for all sub-array elements.
      * @param $data
      * @param array $adds
      * @return mixed
