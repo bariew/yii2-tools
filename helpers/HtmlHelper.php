@@ -52,4 +52,46 @@ class HtmlHelper
                 . Html::endTag('ul')
             . Html::endTag('div');
     }
+
+
+    /**
+     * Yii1 function
+     * Displays the captured PHP error.
+     * This method displays the error in HTML when there is
+     * no active error handler.
+     * @param integer $code error code
+     * @param string $message error message
+     * @param string $file error file
+     * @param string $line error line
+     */
+    public static function displayError($code,$message,$file,$line)
+    {
+        if(YII_DEBUG) {
+            echo "<h1>PHP Error [$code]</h1>\n";
+            echo "<p>$message ($file:$line)</p>\n";
+            echo '<pre>';
+
+            $trace=debug_backtrace();
+            // skip the first 3 stacks as they do not tell the error position
+            if(count($trace)>3)
+                $trace=array_slice($trace,3);
+            foreach($trace as $i=>$t) {
+                if(!isset($t['file']))
+                    $t['file']='unknown';
+                if(!isset($t['line']))
+                    $t['line']=0;
+                if(!isset($t['function']))
+                    $t['function']='unknown';
+                echo "#$i {$t['file']}({$t['line']}): ";
+                if(isset($t['object']) && is_object($t['object']))
+                    echo get_class($t['object']).'->';
+                echo "{$t['function']}()\n";
+            }
+
+            echo '</pre>';
+        } else {
+            echo "<h1>PHP Error [$code]</h1>\n";
+            echo "<p>$message</p>\n";
+        }
+    }
 }
