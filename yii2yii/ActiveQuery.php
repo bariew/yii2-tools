@@ -17,33 +17,51 @@ class ActiveQuery extends \yii\db\ActiveQuery
     public $condition, $order, $together;
     public $scopes = [];
 
-    private $replacements = [
-        'order' => 'orderBy',
-        'condition' => 'where',
-    ];
+    public function __construct($class, $config = [])
+    {
+        parent::__construct($class, $config);
+        $this->replaceAttributes();
+    }
+
+    public function setCondition($condition)
+    {
+        $this->andWhere($condition);
+    }
+
+    public function setOrder($order)
+    {
+        $this->orderBy($order);
+    }
 
     /**
      *
      */
     public function replaceAttributes()
     {
-        foreach ($this->replacements as $old => $new) {
-            $this->$new = $this->$old;
+//        foreach ($this->replacements as $old => $new) {
+//            $this->$new = $this->$old;
+//        }
+//        if ($this->orderBy) {
+//            $resultOrders = [];
+//            $orders = is_array($this->orderBy) ? $this->orderBy : explode(',', $this->orderBy);
+//            foreach ($orders as $key => $order) {
+//                if (is_numeric($order)) {
+//                    $resultOrders[$key] = $order;
+//                    continue;
+//                }
+//                $data = explode(' ', trim($order));
+//                $data[1] = (@$data[1] == 'DESC' ? SORT_DESC : SORT_ASC);
+//                $resultOrders[$data[0]] = $data[1];
+//            }
+//            $this->orderBy = $resultOrders;
+//        }
+        if ($this->condition && !$this->where) {
+            $this->andWhere($this->condition);
         }
-        if ($this->orderBy) {
-            $resultOrders = [];
-            $orders = is_array($this->orderBy) ? $this->orderBy : explode(',', $this->orderBy);
-            foreach ($orders as $key => $order) {
-                if (is_numeric($order)) {
-                    $resultOrders[$key] = $order;
-                    continue;
-                }
-                $data = explode(' ', trim($order));
-                $data[1] = (@$data[1] == 'DESC' ? SORT_DESC : SORT_ASC);
-                $resultOrders[$data[0]] = $data[1];
-            }
-            $this->orderBy = $resultOrders;
+        if ($this->order && !$this->orderBy) {
+            $this->orderBy($this->order);
         }
+        /** @var \yii\db\ActiveRecord $model */
         if ($this->select) {
             $this->select = is_array($this->select) ? $this->select : explode(',', $this->select);
             $select = [];
@@ -62,9 +80,6 @@ class ActiveQuery extends \yii\db\ActiveQuery
             $this->join = [$this->join];
         }
         if ($this->with) {
-            /** @var \yii\db\ActiveRecord $model */
-            $class = $this->modelClass;
-            $model = new $class();
             $with = [];
             foreach ($this->with as $name => $value) {
                 $relName = is_numeric($name) ? $value : $name;
@@ -75,7 +90,7 @@ class ActiveQuery extends \yii\db\ActiveQuery
                     continue;
                 }
                 $with[] = $relName;
-                static::replaceTables($value, $model);
+                //static::replaceTables($value, $model);
                 $this->joinWith(
                     [$relName => function($query) use ($value) {
                         return is_array($value)
@@ -92,7 +107,6 @@ class ActiveQuery extends \yii\db\ActiveQuery
 
     public function toActiveQuery()
     {
-        $this->replaceAttributes();
         $class = $this->modelClass;
         $model = new $class();
         $query = new ActiveQuery($class);
@@ -111,29 +125,36 @@ class ActiveQuery extends \yii\db\ActiveQuery
             return $to;
         }
         if (is_array($from)) {
-            $from = new Query($from);
+            $from = new self($to->modelClass, $from);
         }
+        $class = $from->modelClass = $to->modelClass ?: $from->modelClass;
         if ($from instanceof self) {
             $from->replaceAttributes();
         }
-        $class = $to->modelClass;
-        /** @var \yii\db\ActiveRecord $model */
-        $model = new $class();
         /** @var \yii\db\ActiveQuery $from */
         if ($from->where) {
             $to->andWhere($from->where);
         }
         $to->addParams($from->params);
-        foreach (['orderBy', 'limit', 'with', 'join', 'on', 'link', 'via', 'joinWith', 'select'] as $param) {
-            if (!is_null($from->$param)) {
+        foreach (['orderBy', 'with', 'join', 'on', 'link', 'via', 'joinWith', 'select'] as $param) {
+            if (is_null($from->$param)) {
+                continue;
+            }
+            if (is_array($from->$param) && is_array($to->$param)) {
+                $to->$param = array_merge($to->$param, $from->$param);
+            } else {
                 $to->$param = $from->$param;
             }
         }
-        foreach ([ 'where', 'orderBy', 'join', 'select'] as $param) {
-            if ($to->$param) {
-                static::replaceTables($to->$param, $model);
-            }
+        $to->from = $to->from ? : $from->from;
+        if (!$to->from) {
+            $to->from(['t' => $class::tableName()]);
         }
+//        foreach ([ 'where', 'orderBy', 'join', 'select'] as $param) {
+//            if ($to->$param) {
+//                static::replaceTables($to->$param, $model);
+//            }
+//        }
 
         return $to;
     }
@@ -154,8 +175,9 @@ class ActiveQuery extends \yii\db\ActiveQuery
                 if ($matches[2] == 't') {
                     $table = $model::tableName();
                 } elseif ($relation) {
-                    $class = $relation->modelClass;
-                    $table = $class::tableName();
+                    //$class = $relation->modelClass;
+                    //$table = $class::tableName();
+                    $table = $matches[2];
                 } else {
                     $table = $matches[2];
                 }
