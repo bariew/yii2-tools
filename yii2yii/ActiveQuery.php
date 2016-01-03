@@ -14,53 +14,24 @@ use yii\db\Query;
 
 class ActiveQuery extends \yii\db\ActiveQuery
 {
-    public $condition, $order, $together;
+    public $condition, $order, $together, $group;
     public $scopes = [];
-
-    public function __construct($class, $config = [])
-    {
-        parent::__construct($class, $config);
-        $this->replaceAttributes();
-    }
-
-    public function setCondition($condition)
-    {
-        $this->andWhere($condition);
-    }
-
-    public function setOrder($order)
-    {
-        $this->orderBy($order);
-    }
 
     /**
      *
      */
     public function replaceAttributes()
     {
-//        foreach ($this->replacements as $old => $new) {
-//            $this->$new = $this->$old;
-//        }
-//        if ($this->orderBy) {
-//            $resultOrders = [];
-//            $orders = is_array($this->orderBy) ? $this->orderBy : explode(',', $this->orderBy);
-//            foreach ($orders as $key => $order) {
-//                if (is_numeric($order)) {
-//                    $resultOrders[$key] = $order;
-//                    continue;
-//                }
-//                $data = explode(' ', trim($order));
-//                $data[1] = (@$data[1] == 'DESC' ? SORT_DESC : SORT_ASC);
-//                $resultOrders[$data[0]] = $data[1];
-//            }
-//            $this->orderBy = $resultOrders;
-//        }
-        if ($this->condition && !$this->where) {
+        if ($this->condition) {
             $this->andWhere($this->condition);
         }
-        if ($this->order && !$this->orderBy) {
+        if ($this->order) {
             $this->orderBy($this->order);
         }
+        if ($this->group) {
+            $this->groupBy($this->group);
+        }
+        //if ($this->on)
         /** @var \yii\db\ActiveRecord $model */
         if ($this->select) {
             $this->select = is_array($this->select) ? $this->select : explode(',', $this->select);
@@ -84,7 +55,7 @@ class ActiveQuery extends \yii\db\ActiveQuery
             foreach ($this->with as $name => $value) {
                 $relName = is_numeric($name) ? $value : $name;
                 if (preg_match('/Count/', $relName)) {
-                    continue;
+                      continue;
                 }
                 if (preg_match('/\./', $relName)) {
                     continue;
@@ -105,20 +76,6 @@ class ActiveQuery extends \yii\db\ActiveQuery
         }
     }
 
-    public function toActiveQuery()
-    {
-        $class = $this->modelClass;
-        $model = new $class();
-        $query = new ActiveQuery($class);
-        if (method_exists($model, 'scopes')) {
-            foreach ($model->scopes() as $config) {
-                $scope = new static($class, $config);
-                $this->mergeWith($scope);
-            }
-        }
-        return static::merge($query, $this);
-    }
-
     public static function merge(\yii\db\ActiveQuery $to, $from)
     {
         if (!$from) {
@@ -127,7 +84,6 @@ class ActiveQuery extends \yii\db\ActiveQuery
         if (is_array($from)) {
             $from = new self($to->modelClass, $from);
         }
-        $class = $from->modelClass = $to->modelClass ?: $from->modelClass;
         if ($from instanceof self) {
             $from->replaceAttributes();
         }
@@ -147,14 +103,6 @@ class ActiveQuery extends \yii\db\ActiveQuery
             }
         }
         $to->from = $to->from ? : $from->from;
-        if (!$to->from) {
-            $to->from(['t' => $class::tableName()]);
-        }
-//        foreach ([ 'where', 'orderBy', 'join', 'select'] as $param) {
-//            if ($to->$param) {
-//                static::replaceTables($to->$param, $model);
-//            }
-//        }
 
         return $to;
     }
@@ -164,51 +112,22 @@ class ActiveQuery extends \yii\db\ActiveQuery
         return static::merge($this, $query);
     }
 
-    public static function replaceTables(&$data, ActiveRecord $model)
+    public function toActiveQuery()
     {
-        static::replaceInArray($data, function(&$v) use($model) {
-            if (!is_string($v)) {
-                return;
+        $this->replaceAttributes();
+        $class = $this->modelClass;
+        $model = new $class();
+        $query = new ActiveQuery($class);
+        if (!$this->from) {
+            $this->from(['t' => $class::tableName()]);
+        }
+        if (method_exists($model, 'scopes')) {
+            foreach ($model->scopes() as $config) {
+                $scope = new static($class, $config);
+                $this->mergeWith($scope);
             }
-            $v = preg_replace_callback('/(\W?)([\w_]+)\./', function($matches) use($model){
-                try {$relation = @$model->getRelation($matches[2]);}catch (\Exception  $e){ $relation=false;}
-                if ($matches[2] == 't') {
-                    $table = $model::tableName();
-                } elseif ($relation) {
-                    //$class = $relation->modelClass;
-                    //$table = $class::tableName();
-                    $table = $matches[2];
-                } else {
-                    $table = $matches[2];
-                }
-                return $matches[1] . $table.'.';
-            }, $v);
-        });
+        }
+        return static::merge($query, $this);
     }
 
-    public static function replaceInArray(&$data, $function)
-    {
-        if (is_object($data)) {
-            return;
-        } else if (is_array($data)) {
-            array_walk_recursive($data, $function);
-            static::arrayWalkRecursiveKeys($data, $function);
-        } else {
-            call_user_func_array($function, [&$data]);
-        }
-    }
-
-    public static function arrayWalkRecursiveKeys(&$array, $function)
-    {
-        if (!is_array($array)) {
-            return;
-        }
-        $result = [];
-        foreach ($array as $k => $v) {
-            call_user_func_array($function, [&$k]);
-            static::arrayWalkRecursiveKeys($v, $function);
-            $result[$k] = $v;
-        }
-        $array = $result;
-    }
 }
