@@ -23,9 +23,8 @@ use yii\helpers\FileHelper;
 class FixtureManager
 {
     public static $data;
-    private static $cacheKey = 'test_fixtures';
-    private static $fixturePath = '@app/tests/codeception/fixtures/data';
-    private static $modelPath = '@app/modules';
+    public static $cacheKey = 'test_fixtures';
+    public static $fixturePath = '@tests/codeception/fixtures/data';
 
     /**
      * Sets attributes
@@ -53,7 +52,6 @@ class FixtureManager
             return static::$data = unserialize($data);
         }
         $dir = \Yii::getAlias(static::$fixturePath);
-        $models = static::getModels();
         MigrationHelper::unsetForeignKeyCheck();
         $files = FileHelper::findFiles($dir, ['only' => ['*.php']]);
         asort($files);
@@ -63,12 +61,13 @@ class FixtureManager
             if (!$data = require $file) {
                 continue;
             }
+            $modelClass = @$data['modelClass'];
+            unset($data['modelClass']);
             foreach ($data as $key => $values) {
                 \Yii::$app->db->createCommand()->insert($table, $values)->execute();
-                if (isset($models[$table])) {
-                    $class = $models[$table];
+                if ($modelClass) {
                     /** @var \yii\db\ActiveRecord $model */
-                    $model = new $class($values);
+                    $model = new $modelClass($values);
                     static::$data[$table][$key] = $model->hasAttribute('id')
                         ? $model::find()->orderBy(['id' => SORT_DESC])->one()
                         : new $model;
@@ -112,26 +111,5 @@ class FixtureManager
         \Yii::$app->cache->delete(static::$cacheKey);
         static::$data = null;
         static::init();
-    }
-
-    /**
-     * Gets all models data [tableName => ClassName]
-     * @return array
-     */
-    private static function getModels()
-    {
-        $result = [];
-        $files = FileHelper::findFiles(\Yii::getAlias(static::$modelPath), ['only' => ['*/models/*.php']]);
-        asort($files);
-        foreach ($files as $file) {
-            /** @var \yii\db\ActiveRecord $class */
-            $class = str_replace([\Yii::getAlias('@app'), '.php', '/'], ['\app', '', '\\'], $file);
-            if (!(new \ReflectionClass($class))->hasMethod('tableName')) {
-                continue;
-            }
-            $table = preg_replace('/\W/', '', $class::tableName());
-            $result[$table] = isset($result[$table]) ? $result[$table] : $class;
-        }
-        return $result;
     }
 }
