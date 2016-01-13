@@ -160,13 +160,16 @@ class GridHelper
                 continue;
             }
             $class = get_class($model);
-            foreach ($attributes[$class] as $attribute) {
+            foreach ($attributes[$class] as $attributeData) {
+                @list($attribute, $format) = explode(':', $attributeData);
                 $formName = str_replace(['app\modules', 'models', '\\'], ['','_',''], $class);
                 $key = strtolower('{{'.$formName.'_'.$attribute.'}}');
                 if ($preview) {
                     $result[] = ['label' => $key, 'value' => $model->getAttributeLabel($attribute)];
                 } else {
-                    $result[$key] = $model->$attribute;
+                    $result[$key] = $format
+                        ? Yii::$app->formatter->format($model->$attribute, $format)
+                        : $model->$attribute;
                 }
             }
         }
