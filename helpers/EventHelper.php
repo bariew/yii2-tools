@@ -30,6 +30,6 @@ class EventHelper
         if (!isset($event->changedAttributes)) {
             return $sender->isAttributeChanged($attribute);
         }
-        return @$event->changedAttributes[$attribute] != $sender->getAttribute($attribute);
+        return isset($event->changedAttributes[$attribute]);
     }
 }
