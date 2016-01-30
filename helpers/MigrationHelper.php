@@ -85,7 +85,7 @@ class MigrationHelper
      */
     public static function createForeignKeyName($table, $columns, $refTable)
     {
-        return "FK_{$table}_{$refTable}";
+        return preg_replace('/[^\w_-]/', '', "FK_{$table}_{$refTable}");
     }
 
     /**
