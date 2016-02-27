@@ -94,4 +94,32 @@ class HtmlHelper
             echo "<p>$message</p>\n";
         }
     }
+
+    /**
+     * Renders bootstrap3 button group
+     * @param $button
+     * @param $links
+     * @return string
+     */
+    public static function buttonGroup($button, $links)
+    {
+        foreach ($links as $key => $link) {
+            $links[$key] = Html::beginTag('li')
+                    . Html::a($link[0], $link[1], $link[2])
+                . Html::endTag('li');
+        }
+
+        return Html::beginTag('div', ['class' => 'btn-group'])
+                . Html::button($button[0], array_merge([
+                    'type'=>"button",
+                    'class'=>"btn btn-default dropdown-toggle",
+                    'data-toggle'=>"dropdown",
+                    'aria-haspopup'=>"true",
+                    'aria-expanded'=>"false"
+                ], $button[1]))
+                . Html::beginTag('ul', ['class' => 'dropdown-menu'])
+                    . implode('', $links)
+                . Html::endTag('ul')
+            . Html::endTag('div');
+    }
 }
