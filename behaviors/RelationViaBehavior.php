@@ -53,9 +53,14 @@ class RelationViaBehavior extends Behavior
     protected function getRules()
     {
         $result = [];
+        $relationNames = [];
+        foreach ($this->relations as $key => $value) {
+            $relationNames[] = is_array($value) ? $key : $value;
+        }
+
         foreach ($this->owner->rules() as $key => $rule) {
             $attributes = is_array($rule[0]) ? $rule[0] : [$rule[0]];
-            if (!$relations = array_intersect($this->relations, $attributes)) {
+            if (!$relations = array_intersect($relationNames, $attributes)) {
                 continue;
             }
             $rule[0] = $relations;
@@ -99,7 +104,9 @@ class RelationViaBehavior extends Behavior
     public function afterSave()
     {
         /** @var ActiveRecord $owner */
-        foreach ($this->relations as $relationName) {
+        foreach ($this->relations as $key => $value) {
+            $relationName = is_array($value) ? $key : $value;
+            $defaultData = is_array($value) ? $value : [];
             if (!isset($this->post[$relationName])) {
                 continue;
             }
@@ -108,7 +115,7 @@ class RelationViaBehavior extends Behavior
             $relationOperator = new RelationOperator($this->owner, $relationName);
             $oldIds = $relationOperator->getViaIds()->column();
             $relationOperator->deleteViaIds(array_diff($oldIds, $newIds));
-            $relationOperator->addViaIds(array_diff($newIds, $oldIds));
+            $relationOperator->addViaIds(array_diff($newIds, $oldIds), $defaultData);
         }
     }
 }

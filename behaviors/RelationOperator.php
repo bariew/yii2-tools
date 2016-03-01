@@ -10,6 +10,7 @@ namespace bariew\yii2Tools\behaviors;
 use bariew\yii2Tools\helpers\MigrationHelper;
 use yii\db\ActiveRecord;
 use yii\db\Query;
+use yii\db\ActiveQuery;
 
 /**
  * Helps to manipulate model relations via table data.
@@ -49,9 +50,11 @@ class RelationOperator
         $this->owner = $model;
         $this->relationName = $relationName;
         $this->relation = $this->owner->getRelation($relationName);
-        $this->viaTable = preg_replace('/\W/', '', reset($this->relation->via->from));
+        /** @var ActiveQuery $via */
+        $via = is_array($this->relation->via) ? $this->relation->via[1] : $this->relation->via;
+        $this->viaTable = reset($via->from);
         $this->relationAttribute = $this->relation->link;
-        foreach ($this->relation->via->link as $viaAttribute => $ownerAttribute) {
+        foreach ($via->link as $viaAttribute => $ownerAttribute) {
             $this->condition[$viaAttribute] = $this->owner->$ownerAttribute;
         }
     }
@@ -88,9 +91,10 @@ class RelationOperator
     /**
      * Adds relation data
      * @param $ids
+     * @param array $defaultData
      * @return bool
      */
-    public function addViaIds($ids)
+    public function addViaIds($ids, $defaultData = [])
     {
         if (!$ids) {
             return true;
@@ -99,7 +103,7 @@ class RelationOperator
             $id = is_array($id)
                 ? $id
                 : [reset($this->relationAttribute) => $id];
-            $ids[$key] = array_merge($id, $this->condition);
+            $ids[$key] = array_merge($id, $this->condition, $defaultData);
         }
         MigrationHelper::insertUpdate($this->viaTable, array_keys(reset($ids)), $ids);
     }
