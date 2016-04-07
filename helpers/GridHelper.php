@@ -120,6 +120,7 @@ class GridHelper
     public static function dateFormat($model, $attribute, $options = [], $pickerOptions = [])
     {
         $pickerOptions = array_merge([
+            'language' => Yii::$app->language == 'en' ? 'en-US' : Yii::$app->language,
             'model' => $model,
             'attribute' => $attribute,
             'options' => ['class' => 'form-control'],

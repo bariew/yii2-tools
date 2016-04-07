@@ -24,7 +24,7 @@ class FixtureManager
 {
     public static $data;
     public static $cacheKey = 'test_fixtures';
-    public static $fixturePath = '@tests/codeception/fixtures/data';
+    public static $fixturePath = '@app/tests/codeception/fixtures/data';
 
     /**
      * Sets attributes
