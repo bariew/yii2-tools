@@ -32,7 +32,7 @@ class RankBehavior extends Behavior
     public function events()
     {
         return [
-            ActiveRecord::EVENT_BEFORE_INSERT => 'rankAdd',
+            ActiveRecord::EVENT_BEFORE_VALIDATE => 'rankAdd',
             ActiveRecord::EVENT_AFTER_DELETE => 'rankRemove'
         ];
     }
@@ -42,6 +42,9 @@ class RankBehavior extends Behavior
      */
     public function rankAdd()
     {
+        if (!$this->owner->isNewRecord) {
+            return;
+        }
         if (!is_numeric($this->owner->getAttribute($this->attribute))) {
             $this->owner->setAttribute($this->attribute, $this->getSiblings()->count());
         }
