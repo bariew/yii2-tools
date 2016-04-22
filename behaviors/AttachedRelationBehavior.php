@@ -60,8 +60,15 @@ class AttachedRelationBehavior extends Behavior
         }
     }
 
+    /**
+     * Get either saving post data for related models or models themself
+     * @param $relation
+     * @return array
+     */
     public function getRelationSavingModels($relation)
     {
-        return (array) @$this->savingModels[$relation];
+        return isset($this->savingModels[$relation])
+            ? $this->savingModels[$relation]
+            : $this->owner->$relation;
     }
 }
