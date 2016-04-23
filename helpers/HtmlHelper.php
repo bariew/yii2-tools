@@ -53,6 +53,29 @@ class HtmlHelper
             . Html::endTag('div');
     }
 
+    /**
+     * Button with multiple submit options.
+     * @param $links
+     * @param string $title,
+     * @param array $options
+     * @return string
+     */
+    public static function linkDropdown($title, $links, $options = [])
+    {
+        $lis = '';
+        foreach ($links as $name => $url) {
+            $lis .= Html::tag('li', Html::a($name, $url));
+        }
+
+        return Html::beginTag('div', ['class' => 'btn-group'])
+        . Html::button($title . '<span class="caret"></span>',
+            array_merge(['class' => 'btn dropdown-toggle btn-primary', "data-toggle"=>"dropdown"], $options))
+        . Html::beginTag('ul', ['class'=>'dropdown-menu'])
+        . $lis
+        . Html::endTag('ul')
+        . Html::endTag('div');
+    }
+
 
     /**
      * Yii1 function
