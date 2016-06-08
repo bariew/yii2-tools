@@ -18,6 +18,15 @@ use yii\widgets\ActiveForm;
 class HtmlHelper
 {
     /**
+     * Csrf input for submitting form data
+     * @return string
+     */
+    public static function csrfInput()
+    {
+        return Html::hiddenInput(\Yii::$app->request->csrfParam, \Yii::$app->request->csrfToken);
+    }
+
+    /**
      * Button with multiple submit options.
      * @param ActiveForm $form
      * @param $model
