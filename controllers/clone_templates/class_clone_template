@@ -1,0 +1,4 @@
+
+namespace $namespace;
+
+class $class extends \$oldClass {}
