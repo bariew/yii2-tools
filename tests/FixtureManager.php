@@ -49,7 +49,7 @@ class FixtureManager
     public static function init()
     {
         if ($data = \Yii::$app->cache->get(static::$cacheKey)) {
-            return static::$data = unserialize($data);
+            //return static::$data = unserialize($data);
         }
         $dir = \Yii::getAlias(static::$fixturePath);
         MigrationHelper::unsetForeignKeyCheck();
@@ -100,7 +100,7 @@ class FixtureManager
      */
     public static function update()
     {
-        \Yii::$app->cache->set(static::$cacheKey, serialize(static::$data));
+        //\Yii::$app->cache->set(static::$cacheKey, serialize(static::$data));
     }
 
     /**

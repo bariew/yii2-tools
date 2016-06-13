@@ -51,6 +51,6 @@ class OwnerBehavior extends Behavior
     public function isAccessible($user_id = null)
     {
         $user_id = $user_id ? : \Yii::$app->user->id;
-        return $this->owner->{$this->attribute} = $user_id;
+        return $this->owner->{$this->attribute} == $user_id;
     }
 }
