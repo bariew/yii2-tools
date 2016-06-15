@@ -7,6 +7,7 @@
 
 namespace bariew\yii2Tools\helpers;
 use yii\db\ActiveRecord;
+use yii\helpers\Html;
 use yii\helpers\Inflector;
 use yii\jui\DatePicker;
 use Yii;
@@ -74,6 +75,28 @@ class GridHelper
                     return @$list[$data->$attribute];
                 },
             'filter' => $list,
+            'visible' => $model->isAttributeSafe($attribute),
+        ], $options);
+    }
+
+
+    /**
+     * Renders Grid column for list value
+     * @param ActiveRecord|bool $model
+     * @param $attribute
+     * @param array $options
+     * @return array
+     */
+    public static function linkFormat($model, $attribute, $options = [])
+    {
+        return array_merge([
+            'attribute' => $attribute,
+            'format' => 'raw',
+            'value' => !$model->isNewRecord
+                ? Html::a($model->$attribute, ['view', 'id' => $model->primaryKey])
+                : function ($data) use ($attribute) {
+                    return Html::a($data->$attribute, ['view', 'id' => $data->primaryKey]);
+                },
             'visible' => $model->isAttributeSafe($attribute),
         ], $options);
     }

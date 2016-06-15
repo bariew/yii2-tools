@@ -32,9 +32,9 @@ class FileRenameAction extends Action
             && $newName != $name
             && $model->renameFile($name, $newName)
         ) {
-            Yii::$app->session->setFlash('success', Yii::t('extensions/file_behavior', 'File successfully renamed'));
+            Yii::$app->session->setFlash('success', Yii::t('app', 'File successfully renamed'));
         } else {
-            Yii::$app->session->setFlash('error', Yii::t('extensions/file_behavior', 'File rename error'));
+            Yii::$app->session->setFlash('error', Yii::t('app', 'File rename error'));
         }
         return $this->controller->redirect(Yii::$app->request->referrer);
     }
