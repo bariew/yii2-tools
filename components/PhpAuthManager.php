@@ -8,7 +8,7 @@
 namespace bariew\yii2Tools\components;
 use Yii;
 use yii\base\Event;
-use yii\rbac\Assignment;
+use yii\web\Application;
 use yii\web\Controller;
 use yii\web\HttpException;
 
@@ -18,11 +18,17 @@ use yii\web\HttpException;
  * and checks whether there is a rbac access permission named like <module>/<controller>/<action> for the current user.
  * It also supports regexps for permission names like <module>/\w+/\w+
  *
- * Usage: add to your config file components:
-   'authManager'   => [
-        'class' => 'bariew\yii2Tools\components\PhpAuthManager',
-        'defaultRoles' => ['app/site/.*', 'user/default/.*', 'page/default/.*'], // everyone can access these urls (app is for base controllers)
-    ],
+ * Usage:
+ * 1. add to your config file components:
+   'components' => [
+   ...
+        'authManager'   => [
+            'class' => 'bariew\yii2Tools\components\PhpAuthManager',
+            'defaultRoles' => ['app/site/.*', 'user/default/.*', 'page/default/.*'], // everyone can access these urls (app is for base controllers)
+        ],
+   ]
+ * 2. add it to your config bootstrap for auto init the web access event :
+    'bootstrap' => [... , 'authManager']
  *
  * @author Pavel Bariev <bariew@yandex.ru>
  *
@@ -48,15 +54,10 @@ class PhpAuthManager extends \yii\rbac\PhpManager
     public function init()
     {
         parent::init();
-        Event::on(Controller::className(), 'beforeAction', [$this, 'beforeActionAccess']);
-        if(Yii::$app->user->isGuest){
+        if(!Yii::$app instanceof Application){
             return;
         }
-        $this->assignments[Yii::$app->user->id]['default'] = new Assignment([
-            'userId' => Yii::$app->user->id,
-            'roleName' => 'default',
-            'createdAt' => time(),
-        ]);
+        Event::on(Controller::className(), 'beforeAction', [$this, 'beforeActionAccess']);
     }
 
     /**
@@ -68,7 +69,7 @@ class PhpAuthManager extends \yii\rbac\PhpManager
     {
         $controller = $event->sender;
         if (!Yii::$app->user->can($controller->module->id.'/'.$controller->id.'/'.$controller->action->id)) {
-            throw new HttpException(403, Yii::t('app/rbac', 'Access denied'));
+            throw new HttpException(403, Yii::t('app', 'Access denied'));
         }
     }
 

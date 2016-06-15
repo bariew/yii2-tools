@@ -5,7 +5,7 @@
  * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
-namespace bariew\yii2Tools\behaviors;
+namespace bariew\yii2Tools\base;
 
 use yii\base\DynamicModel;
 use yii\base\InvalidConfigException;

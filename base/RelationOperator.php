@@ -4,7 +4,7 @@
  * @copyright (c) 2015, Pavel Bariev
  * @license http://www.opensource.org/licenses/bsd-license.php
  */
-namespace bariew\yii2Tools\behaviors;
+namespace bariew\yii2Tools\base;
 
 
 use bariew\yii2Tools\helpers\MigrationHelper;
@@ -52,7 +52,8 @@ class RelationOperator
         $this->relation = $this->owner->getRelation($relationName);
         /** @var ActiveQuery $via */
         $via = is_array($this->relation->via) ? $this->relation->via[1] : $this->relation->via;
-        $this->viaTable = reset($via->from);
+        /** @var \yii\db\ActiveRecord $viaClass */
+        $this->viaTable = ($viaClass = $via->modelClass) ? $viaClass::tableName() : reset($via->from);
         $this->relationAttribute = $this->relation->link;
         foreach ($via->link as $viaAttribute => $ownerAttribute) {
             $this->condition[$viaAttribute] = $this->owner->$ownerAttribute;

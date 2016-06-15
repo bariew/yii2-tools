@@ -1,9 +1,8 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: pt
- * Date: 08.04.16
- * Time: 11:43
+ * AttachedRelationBehavior class file.
+ * @copyright (c) 2016, Pavel Bariev
+ * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
 namespace bariew\yii2Tools\behaviors;
@@ -13,6 +12,21 @@ use yii\db\ActiveRecord;
 use Yii;
 use bariew\yii2Tools\helpers\FormHelper;
 
+/**
+ * Attaches children models post data e.g. when child model creation data places
+ * inside parents form and depends on parent's afterSave id.
+ *
+ * Usage: add to model behaviors() method:
+ * return [
+ *      ...
+ *      [
+ *          'class' => 'bariew\yii2Tools\behaviors\AttachedRelationBehavior',
+ *          'relations' => ['children'], // you need to have relation function getChildren() defined
+ *      ]
+ * ];
+ * @author Pavel Bariev <bariew@yandex.ru>
+ *
+ */
 class AttachedRelationBehavior extends Behavior
 {
     public $relations = [];
@@ -30,6 +44,9 @@ class AttachedRelationBehavior extends Behavior
         ];
     }
 
+    /**
+     * Validates children models according to their class rules
+     */
     public function beforeValidate()
     {
         /** @var ActiveRecord $owner */
@@ -43,6 +60,9 @@ class AttachedRelationBehavior extends Behavior
         }
     }
 
+    /**
+     * Saves children models
+     */
     public function afterSave()
     {
         /** @var ActiveRecord $owner */

@@ -6,15 +6,10 @@
  */
 
 namespace bariew\yii2Tools\behaviors;
+use bariew\yii2Tools\base\LDynamicModel;
+use bariew\yii2Tools\base\RelationOperator;
 use yii\base\Behavior;
-use yii\base\DynamicModel;
-use yii\base\Exception;
-use yii\base\InvalidConfigException;
-use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
-use yii\validators\Validator;
-use yii\web\Application;
-use yii\web\Request;
 
 /**
  * Description.
@@ -41,10 +36,6 @@ class RelationViaBehavior extends Behavior
      * @var array strings, relation names you want to process by behavior
      */
     public $relations = [];
-    /**
-     * @var array POST data
-     */
-    public $post = [];
 
     /**
      * Extracts rules for relations only.
@@ -86,13 +77,7 @@ class RelationViaBehavior extends Behavior
      */
     public function beforeValidate()
     {
-        if (!\Yii::$app->request instanceof Request) {
-            return;
-        }
-        if (!$this->post = \Yii::$app->request->post($this->owner->formName())) {
-            return;
-        }
-        $model = LDynamicModel::validateModelData($this->post, $this->getRules(), $this->owner);
+        $model = LDynamicModel::validateModelData($this->relationPost, $this->getRules(), $this->owner);
         foreach ($model->firstErrors as $attribute => $error) {
             $this->owner->addError($attribute, $error);
         }
@@ -107,15 +92,40 @@ class RelationViaBehavior extends Behavior
         foreach ($this->relations as $key => $value) {
             $relationName = is_array($value) ? $key : $value;
             $defaultData = is_array($value) ? $value : [];
-            if (!isset($this->post[$relationName])) {
+            if (!isset($this->relationPost[$relationName])) {
                 continue;
             }
-            $newIds = (array) $this->post[$relationName];
+            $newIds = (array) $this->relationPost[$relationName];
             $newIds = array_unique(array_filter($newIds, function($v){return !empty($v);}));
             $relationOperator = new RelationOperator($this->owner, $relationName);
             $oldIds = $relationOperator->getViaIds()->column();
             $relationOperator->deleteViaIds(array_diff($oldIds, $newIds));
             $relationOperator->addViaIds(array_diff($newIds, $oldIds), $defaultData);
         }
+    }
+
+    public $relationPost = [];
+    public function setRelation($name, $value)
+    {
+        $this->relationPost[$name] = $value;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function canSetProperty($name, $checkVars = true)
+    {
+        return in_array($name, $this->relations) || parent::canSetProperty($name, $checkVars);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __set($name, $value)
+    {
+        if (in_array($name, $this->relations)) {
+            return $this->setRelation($name, $value);
+        }
+        return parent::__set($name, $value);
     }
 }

@@ -41,7 +41,7 @@ class CloneController extends Controller
     /**
      * @var int whether to inherit (include) parent view files
      */
-    public $inherit = 0;
+    public $inherit = 1;
 
     /**
      * @var array files not to change.

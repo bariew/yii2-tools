@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
 /**
  * This behavior manages access rights while current user is going
  * to access/find current owner model
- * It sets owners scenario after it model is initiated
+ * It sets owners scenario after it's model is initiated
  * and provides 'search' method which allows to find only
  * models with 'owner_id' allowed to current user.
  * It needs user to have 'owner_id' too which is the same as the model's owner_id
