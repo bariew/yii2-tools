@@ -39,9 +39,9 @@ class SerializeBehavior extends Behavior
     public function events()
     {
         return [
-            ActiveRecord::EVENT_AFTER_FIND => 'unserialize',
-            ActiveRecord::EVENT_BEFORE_INSERT => 'serialize',
-            ActiveRecord::EVENT_BEFORE_UPDATE => 'serialize'
+            ActiveRecord::EVENT_AFTER_FIND => 'unserializeAttributes',
+            ActiveRecord::EVENT_BEFORE_INSERT => 'serializeAttributes',
+            ActiveRecord::EVENT_BEFORE_UPDATE => 'serializeAttributes'
         ];
     }
 
@@ -49,15 +49,17 @@ class SerializeBehavior extends Behavior
      * Serializes data
      * @throws Exception
      */
-    public function serialize()
+    public function serializeAttributes()
     {
-        foreach ($this->attributes as $attribute) {
+        foreach ($this->attributes as $key => $attribute) {
+            $attribute = is_numeric($key) ? $attribute : $key;
+            $value = $this->owner->getAttribute($attribute);
             switch ($this->type) {
                 case static::TYPE_JSON :
-                    $value = json_encode($this->owner->getAttribute($attribute));
+                    $value = json_encode($value);
                     break;
                 case static::TYPE_PHP :
-                    $value = serialize($this->owner->getAttribute($attribute));
+                    $value = serialize($value);
                     break;
                 default: throw new Exception("Unknown type: ". $this->type);
             }
@@ -66,22 +68,30 @@ class SerializeBehavior extends Behavior
     }
 
     /**
-     * Unseriaizes data
+     * Unserializes data
      * @throws Exception
      */
-    public function unserialize()
+    public function unserializeAttributes()
     {
-        foreach ($this->attributes as $attribute) {
+        foreach ($this->attributes as $key => $attribute) {
+            $default = is_numeric($key) ? [] : $attribute;
+            $attribute = is_numeric($key) ? $attribute : $key;
+            $value = $this->owner->getAttribute($attribute);
+            if (is_array($value)) {
+                continue;
+            }
             switch ($this->type) {
                 case static::TYPE_JSON :
-                    $value = json_decode($this->owner->getAttribute($attribute), true);
+                    $value = $value ? json_decode($value, true) : [];
                     break;
                 case static::TYPE_PHP :
-                    $value = unserialize($this->owner->getAttribute($attribute));
+                    $value = $value ? unserialize($value) : [];
                     break;
                 default: throw new Exception("Unknown type: ". $this->type);
             }
+            $value = (!$value && $this->owner->isNewRecord) ? $default : $value;
             $this->owner->setAttribute($attribute, $value);
         }
+        return $this->owner;
     }
 }

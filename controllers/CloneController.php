@@ -96,6 +96,7 @@ class CloneController extends Controller
     {
         $destination = Yii::getAlias($this->destination);
         $destinationModuleName = $this->getDestinationModuleName();
+        $counter = 0;
         foreach (FileHelper::findFiles($destination) as $path) {
             if (!$this->replace && in_array($path, $this->keepFiles)) {
                 continue;
@@ -105,10 +106,12 @@ class CloneController extends Controller
             } else if (preg_match('/^.*\W([A-Z]\w+)\.php$/', $path, $matches)) { // Class file.
                 file_put_contents($path, $this->createClassContent($matches[1], $path));
             } else if (self::isMigration($path)) { // Class file.
+                $counter++;
                 file_put_contents($path, $this->updateFileContent($path));
                 if ($destinationModuleName) {
-                    $this->renameClassFile($path, function($className) use ($destinationModuleName){
-                        return $className . '_' . $destinationModuleName;
+                    $this->renameClassFile($path, function($className) use ($destinationModuleName, $counter){
+                        $time = time() + $counter;
+                        return preg_replace('#^m(\d+_\d+)_(.+)$#', 'm'.date('ymd_His', $time).'_'.$destinationModuleName.'_$2', $className);
                     });
                 }
             } else if ($this->inherit) {
