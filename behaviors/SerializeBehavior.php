@@ -39,6 +39,7 @@ class SerializeBehavior extends Behavior
     public function events()
     {
         return [
+            ActiveRecord::EVENT_INIT => 'unserializeAttributes',
             ActiveRecord::EVENT_AFTER_FIND => 'unserializeAttributes',
             ActiveRecord::EVENT_BEFORE_INSERT => 'serializeAttributes',
             ActiveRecord::EVENT_BEFORE_UPDATE => 'serializeAttributes'
@@ -92,6 +93,17 @@ class SerializeBehavior extends Behavior
             $value = (!$value && $this->owner->isNewRecord) ? $default : $value;
             $this->owner->setAttribute($attribute, $value);
         }
-        return $this->owner;
+    }
+
+    public function prettyArray($attribute)
+    {
+        $labels = (array) @$this->attributes[$attribute];
+        $result = ['<ul>'];
+        foreach ($this->owner->$attribute as $key => $value) {
+            $label = @$labels[$key] ? : $key;
+            $result[] = "<li>{$label}: $value</li>";
+        }
+        return implode('', $result).'</ul>';
+
     }
 }
