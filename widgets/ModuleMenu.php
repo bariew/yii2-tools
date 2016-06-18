@@ -5,7 +5,7 @@
  * @license http://www.opensource.org/licenses/bsd-license.php
  */
 
-namespace bariew\moduleModule\widgets;
+namespace bariew\yii2Tools\widgets;
 use Yii;
 use bariew\dropdown\Nav;
 use yii\helpers\ArrayHelper;
