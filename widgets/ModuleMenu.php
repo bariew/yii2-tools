@@ -38,10 +38,6 @@ class ModuleMenu extends Nav
     protected function createItems($items)
     {
         $result = [];
-        $order = explode(',', Yii::$app->getModule('module')->params['menuOrder']);
-        foreach ($order as $key) {
-            $result[trim($key)] = [];
-        }
         foreach (\Yii::$app->modules as $id => $options) {
             $module = Yii::$app->getModule($id);
             $params = $module->params;
