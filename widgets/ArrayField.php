@@ -33,7 +33,7 @@ class ArrayField extends InputWidget
         ]).'</div></div>{error}';
         foreach ($fields as $key => $value) {
             $label = @$this->labels[$key] ? : $key;
-            $result[] = (new ActiveForm())
+            $result[] = (new ActiveForm(['init' => false]))
                 ->field($this->model, $this->attribute . "[{$key}]", compact('template'))
                 ->label($label)
                 ->textInput(['placeholder' => $label]);

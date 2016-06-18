@@ -39,8 +39,10 @@ class AttachedRelationBehavior extends Behavior
     {
         return [
             ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
-            ActiveRecord::EVENT_AFTER_INSERT => 'afterSave',
-            ActiveRecord::EVENT_AFTER_UPDATE => 'afterSave',
+            ActiveRecord::EVENT_BEFORE_INSERT => 'attachRelations',
+            ActiveRecord::EVENT_BEFORE_UPDATE => 'attachRelations',
+            ActiveRecord::EVENT_AFTER_INSERT => 'attachRelations',
+            ActiveRecord::EVENT_AFTER_UPDATE => 'attachRelations',
         ];
     }
 
@@ -51,33 +53,40 @@ class AttachedRelationBehavior extends Behavior
     {
         /** @var ActiveRecord $owner */
         $owner = $this->owner;
-        foreach ($this->relations as $relation) {
-            $ruleLoad = FormHelper::loadRelation($owner, $relation, Yii::$app->request->post());
+        foreach ($this->relations as $key => $relation) {
+            $data = is_array($relation) ? $relation : [];
+            $relation = is_array($relation) ? $key : $relation;
+            $ruleLoad = FormHelper::loadRelation($owner, $relation, Yii::$app->request->post(), $data);
             $this->savingModels[$relation] = $ruleLoad['models'];
             foreach ($ruleLoad['errors'] as $errors) {
-                $owner->addError($relation, '');
+                $owner->addError($relation, json_encode($errors));
             }
         }
     }
 
-    /**
-     * Saves children models
-     */
-    public function afterSave()
+    public function attachRelations()
     {
         /** @var ActiveRecord $owner */
         $owner = $this->owner;
+        $savingModels = $this->savingModels;
         /** @var ActiveRecord[] $models */
         foreach ($this->savingModels as $relation => $models) {
             $link = $owner->getRelation($relation)->link;
-            /** @var  $model */
-            foreach ($models as $model) {
+            foreach ($models as $key => $model) {
                 foreach ($link as $relationAttribute => $ownerAttribute) {
-                    $model->$relationAttribute = $owner->$ownerAttribute;
+                    if ((array) $relationAttribute == $model->primaryKey()) {   // model is parent
+                        $model->save();
+                        $owner->$ownerAttribute = $model->$relationAttribute;
+                        unset($savingModels[$relation][$relation][$key]);
+                    } else if ($owner->$ownerAttribute) {                       // owner is parent
+                        $model->$relationAttribute = $owner->$ownerAttribute;
+                        $model->save();
+                        unset($savingModels[$relation][$relation][$key]);
+                    }
                 }
-                $model->save();
             }
         }
+        $this->savingModels = $savingModels;
     }
 
     /**
