@@ -20,7 +20,6 @@ use yii\widgets\InputWidget;
  */
 class ArrayField extends InputWidget
 {
-    public $labels = [];
     public function run()
     {
         $result = [];
@@ -32,7 +31,7 @@ class ArrayField extends InputWidget
             'onclick' => '$(this).closest(".form-group").fadeOut().remove();'
         ]).'</div></div>{error}';
         foreach ($fields as $key => $value) {
-            $label = @$this->labels[$key] ? : $key;
+            $label = $this->model->getAttributeLabel($key) ? : $key;
             $result[] = (new ActiveForm(['init' => false]))
                 ->field($this->model, $this->attribute . "[{$key}]", compact('template'))
                 ->label($label)

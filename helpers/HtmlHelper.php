@@ -154,4 +154,25 @@ class HtmlHelper
                 . Html::endTag('ul')
             . Html::endTag('div');
     }
+
+    /**
+     * Returns array as key => value ul->li lists
+     * @param $array
+     * @return string
+     */
+    public static function arrayPrettyPrint($array, $raw = false){
+        if (!$array) {
+            return '';
+        }
+        $parentOptions = ['tag' => 'dl', 'class' => 'dl-horizontal'];
+        $labelOptions = ['tag' => 'dt'];
+        $valueOptions = ['tag' => 'dd'];
+        $content = [];
+        foreach ($array as $key => $value) {
+            $value = is_array($value) ? "&nbsp" . static::arrayPrettyPrint($value) : $value;
+            $content[] = Html::tag($labelOptions['tag'], $key, $labelOptions);
+            $content[] = Html::tag($valueOptions['tag'], $value, $valueOptions);
+        }
+        return Html::tag($parentOptions['tag'], implode('', $content), $parentOptions);
+    }
 }

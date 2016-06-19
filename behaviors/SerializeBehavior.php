@@ -6,6 +6,7 @@
  */
 
 namespace bariew\yii2Tools\behaviors;
+use bariew\yii2Tools\helpers\HtmlHelper;
 use yii\base\Behavior;
 use yii\base\Exception;
 use yii\db\ActiveRecord;
@@ -95,15 +96,19 @@ class SerializeBehavior extends Behavior
         }
     }
 
-    public function prettyArray($attribute)
+    public function labeledAttribute($attribute)
     {
-        $labels = (array) @$this->attributes[$attribute];
-        $result = ['<ul>'];
+        $result = [];
         foreach ($this->owner->$attribute as $key => $value) {
-            $label = @$labels[$key] ? : $key;
-            $result[] = "<li>{$label}: $value</li>";
+            $label = $this->owner->getAttributeLabel($key) ? : $key;
+            $result[$label] = $value;
         }
-        return implode('', $result).'</ul>';
+        return $result;
 
+    }
+
+    public function prettyPrint($attribute)
+    {
+        return HtmlHelper::arrayPrettyPrint($this->labeledAttribute($attribute));
     }
 }
