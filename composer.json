@@ -11,7 +11,8 @@
         }
     ],
     "require"   : {
-        "yiisoft/yii2-imagine": "~2.0@dev"
+        "yiisoft/yii2-imagine": "~2.0@dev",
+        "bariew/phpquery": "dev-master"
     },
     "autoload": {
         "psr-4": {

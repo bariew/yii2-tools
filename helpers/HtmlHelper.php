@@ -6,7 +6,10 @@
  */
 
 namespace bariew\yii2Tools\helpers;
+
+use Yii;
 use yii\helpers\Html;
+use yii\web\Request;
 use yii\widgets\ActiveForm;
 
 /**
@@ -174,5 +177,35 @@ class HtmlHelper
             $content[] = Html::tag($valueOptions['tag'], $value, $valueOptions);
         }
         return Html::tag($parentOptions['tag'], implode('', $content), $parentOptions);
+    }
+
+    protected static $_request;
+    /**
+     * Gets router rule for url.
+     * @param string $url url
+     * @return mixed boolean or array [module, controller, action] ids.
+     */
+    public static function urlToPath($url)
+    {
+        $baseUrl = Yii::$app->request->hostInfo;
+        $parsedUrl = parse_url($url);
+        if (isset($parsedUrl['host']) && !strpos($baseUrl, $parsedUrl['host'])) {
+            return false;
+        }
+        if (!isset($parsedUrl['path'])) {
+            return false;
+        }
+        $path = str_replace('/' . basename(Yii::$app->request->scriptFile), '', $parsedUrl['path']);
+        $request = self::$_request ? self::$_request : (self::$_request = new Request());
+        $request->setPathInfo($path);
+        $rule = explode('/', Yii::$app->urlManager->parseRequest($request)[0]);
+
+        if (count($rule) == 2) {
+            array_unshift($rule, Yii::$app->id);
+        }
+        if (count($rule)!=3) {
+            return false;
+        }
+        return array_combine(['module', 'controller', 'action'], $rule);
     }
 }
