@@ -96,8 +96,12 @@ class PhpAuthManager extends \yii\rbac\PhpManager
      */
     public function beforeActionAccess(Event $event)
     {
+        /** @var \yii\web\Controller $controller */
         $controller = $event->sender;
         if (!Yii::$app->user->can($controller->module->id.'/'.$controller->id.'/'.$controller->action->id)) {
+            if (Yii::$app->user->isGuest) {
+                $controller->redirect(Yii::$app->user->loginUrl) && Yii::$app->end();
+            }
             throw new HttpException(403, Yii::t('app', 'Access denied'));
         }
     }
