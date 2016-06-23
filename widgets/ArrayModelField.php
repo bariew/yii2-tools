@@ -28,6 +28,7 @@ class ArrayModelField extends InputWidget
     /** @var  \yii\db\ActiveQuery */
     protected $relation;
     public $viewName;
+    public $items;
 
     /**
      * @inheritdoc
@@ -49,7 +50,8 @@ class ArrayModelField extends InputWidget
         $template =  '<div class="template">'.$this->render($this->viewName, [
             'model' => new $class(), 'form' => $this->form, 'index' => 'myindex'
         ]).'</div>';
-        foreach ($this->relation->all() as $index => $model) {
+        $items = $this->items ?: $this->relation->all();
+        foreach ($items as $index => $model) {
             $result[] = $this->render($this->viewName, compact('index', 'model', 'form'));
         }
         $result[] = Html::a(\Yii::t('app', ' Add'), '#', [

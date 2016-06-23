@@ -54,35 +54,32 @@ class AttachedRelationBehavior extends Behavior
      */
     public function beforeValidate()
     {
-        /** @var ActiveRecord $owner */
-        $owner = $this->owner;
+        $this->reset();
         foreach ($this->relations as $key => $relation) {
             $data = is_array($relation) ? $relation : [];
             $relation = is_array($relation) ? $key : $relation;
-            $ruleLoad = FormHelper::loadRelation($owner, $relation, Yii::$app->request->post(), $data);
+            $ruleLoad = FormHelper::loadRelation($this->owner, $relation, Yii::$app->request->post(), $data);
             $this->savingModels[$relation] = $ruleLoad['models'];
             foreach ($ruleLoad['errors'] as $errors) {
-                $owner->addError($relation, json_encode($errors, JSON_UNESCAPED_UNICODE));
+                $this->owner->addError($relation, json_encode($errors, JSON_UNESCAPED_UNICODE));
             }
         }
     }
 
     public function attachRelations()
     {
-        /** @var ActiveRecord $owner */
-        $owner = $this->owner;
         $savingModels = $this->savingModels;
         /** @var ActiveRecord[] $models */
         foreach ($this->savingModels as $relation => $models) {
-            $link = $owner->getRelation($relation)->link;
+            $link = $this->owner->getRelation($relation)->link;
             foreach ($models as $key => $model) {
                 foreach ($link as $relationAttribute => $ownerAttribute) {
                     if ((array) $relationAttribute == $model->primaryKey()) {   // model is parent
                         $model->save();
-                        $owner->$ownerAttribute = $model->$relationAttribute;
+                        $this->owner->$ownerAttribute = $model->$relationAttribute;
                         unset($savingModels[$relation][$key]);
-                    } else if ($owner->$ownerAttribute) {                       // owner is parent
-                        $model->$relationAttribute = $owner->$ownerAttribute;
+                    } else if ($this->owner->$ownerAttribute) {                 // owner is parent
+                        $model->$relationAttribute = $this->owner->$ownerAttribute;
                         $model->save();
                         unset($savingModels[$relation][$key]);
                     }
@@ -104,5 +101,16 @@ class AttachedRelationBehavior extends Behavior
             : $this->owner->$relation;
         return is_array($result) && (!$this->owner->getRelation($relation)->multiple)
             ? reset($result) : $result;
+    }
+
+    private function reset()
+    {
+        foreach ($this->owner->behaviors() as $settings) {
+            if (!is_array($settings) || $settings['class'] != $this::className()) {
+                continue;
+            }
+            $this->relations = $settings['relations'];
+        }
+
     }
 }
