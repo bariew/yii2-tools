@@ -37,6 +37,7 @@ class ModelHelper
     /**
      * @param $class
      * @param $id
+     * @param array $options
      * @return string
      */
     public static function getLink($class, $id, $options = [])
@@ -47,11 +48,9 @@ class ModelHelper
         $modelName = ($modulePath == $modelPath || $modelPath == 'item')
             ? $moduleName
             :  "{$moduleName} {$modelName}";
-        return Html::a(
-            "{$modelName}#{$id}",
-            ["/{$modulePath}/{$modelPath}/view", 'id' => $id],
-            $options
-        );
+        return $id
+            ? Html::a("{$modelName}#{$id}", ["/{$modulePath}/{$modelPath}/view", 'id' => $id], $options)
+            : Html::a("{$modelName}", ["/{$modulePath}/{$modelPath}/index"], $options);
     }
 
     public static function attributeDifference(Event $event)

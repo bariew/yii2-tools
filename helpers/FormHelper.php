@@ -71,6 +71,7 @@ class FormHelper
                 $result['errors'][$index] = $model->errors;
             }
         }
+
         return $result;
     }
 

@@ -24,6 +24,9 @@ use bariew\yii2Tools\helpers\FormHelper;
  *          'relations' => ['children'], // you need to have relation function getChildren() defined
  *      ]
  * ];
+ *
+ * @property \yii\db\ActiveRecord owner
+ *
  * @author Pavel Bariev <bariew@yandex.ru>
  *
  */
@@ -59,7 +62,7 @@ class AttachedRelationBehavior extends Behavior
             $ruleLoad = FormHelper::loadRelation($owner, $relation, Yii::$app->request->post(), $data);
             $this->savingModels[$relation] = $ruleLoad['models'];
             foreach ($ruleLoad['errors'] as $errors) {
-                $owner->addError($relation, json_encode($errors));
+                $owner->addError($relation, json_encode($errors, JSON_UNESCAPED_UNICODE));
             }
         }
     }
@@ -77,11 +80,11 @@ class AttachedRelationBehavior extends Behavior
                     if ((array) $relationAttribute == $model->primaryKey()) {   // model is parent
                         $model->save();
                         $owner->$ownerAttribute = $model->$relationAttribute;
-                        unset($savingModels[$relation][$relation][$key]);
+                        unset($savingModels[$relation][$key]);
                     } else if ($owner->$ownerAttribute) {                       // owner is parent
                         $model->$relationAttribute = $owner->$ownerAttribute;
                         $model->save();
-                        unset($savingModels[$relation][$relation][$key]);
+                        unset($savingModels[$relation][$key]);
                     }
                 }
             }
@@ -96,8 +99,10 @@ class AttachedRelationBehavior extends Behavior
      */
     public function getRelationSavingModels($relation)
     {
-        return isset($this->savingModels[$relation])
+        $result = isset($this->savingModels[$relation])
             ? $this->savingModels[$relation]
             : $this->owner->$relation;
+        return is_array($result) && (!$this->owner->getRelation($relation)->multiple)
+            ? reset($result) : $result;
     }
 }
