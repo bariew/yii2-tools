@@ -79,7 +79,6 @@ class GridHelper
         ], $options);
     }
 
-
     /**
      * Renders Grid column for list value
      * @param ActiveRecord|bool $model
@@ -156,6 +155,30 @@ class GridHelper
     }
 
     /**
+     * Renders Grid column for array value
+     * @param ActiveRecord|bool $model
+     * @param $attribute
+     * @param array $options
+     * @return array
+     */
+    public static function arrayFormat($model, $attribute, $options = [])
+    {
+        $replacer = function($v){
+            return '<pre>'.preg_replace(['#[\s\n]*\)#', '#Array[\s\n]*\(#'], ['', ''], print_r($v, true)).'</pre>';
+        };
+        return array_merge([
+            'attribute' => $attribute,
+            'format' => 'raw',
+            'value' => !$model->isNewRecord
+                ? $replacer($model->$attribute)
+                : function ($data) use ($attribute, $replacer) {
+                    return $replacer($data->$attribute);
+                },
+            'visible' => $model->isAttributeSafe($attribute),
+        ], $options);
+    }
+
+    /**
      * Creates array of replacements for {{modelName_attribute}} placeholders.
      * @param Model[] $models
      * @param array $attributes
@@ -199,4 +222,5 @@ class GridHelper
         }
         return $result;
     }
+
 }
