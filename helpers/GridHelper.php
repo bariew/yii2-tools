@@ -61,20 +61,23 @@ class GridHelper
      */
     public static function listFormat($model, $attribute, $options = [])
     {
-        $method = static::listName($attribute);
-        $key = get_class($model).$attribute;
-        $list = static::$lists[$key] = isset(static::$lists[$key])
-            ? static::$lists[$key]
-            : $model->$method();
+        $listFunction = function ($model, $attribute) {
+            $method = static::listName($attribute);
+            $key = get_class($model) . $attribute;
+            return static::$lists[$key] = method_exists(get_class($model), $method) && isset(static::$lists[$key])
+                ? static::$lists[$key] : $model->$method();
+        };
+
+        $list = $listFunction($model, $attribute);
         return array_merge([
             'attribute' => $attribute,
             'format' => 'raw',
             'value' => !$model->isNewRecord
                 ? @$list[$model->$attribute]
-                : function ($data) use ($list, $attribute) {
-                    return @$list[$data->$attribute];
+                : function ($data) use ($listFunction, $attribute) {
+                    return @$listFunction($data, $attribute)[$data->$attribute];
                 },
-            'filter' => $list,
+            'filter' => $list ? : null,
             'visible' => $model->isAttributeSafe($attribute),
         ], $options);
     }
