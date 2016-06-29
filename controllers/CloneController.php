@@ -15,7 +15,7 @@ use yii\helpers\FileHelper;
  * Description.
  *
  * Usage:
- * @example ./yii clone/module @bariew/postModule @app/modules/product --replace=1 --inherit=1
+ * @example ./yii clone/module @bariew/postAbstractModule @app/modules/product --replace=1 --inherit=1
 
  * @author Pavel Bariev <bariew@yandex.ru>
  *

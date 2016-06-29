@@ -30,9 +30,10 @@ class ArrayField extends InputWidget
             'style' => 'cursor:pointer',
             'onclick' => '$(this).closest(".form-group").fadeOut().remove();'
         ]).'</div></div>{error}';
+        $form = (new ActiveForm(['init' => false]));
         foreach ($fields as $key => $value) {
             $label = $this->model->getAttributeLabel($key) ? : $key;
-            $result[] = (new ActiveForm(['init' => false]))
+            $result[] = $form
                 ->field($this->model, $this->attribute . "[{$key}]", compact('template'))
                 ->label($label)
                 ->textInput(['placeholder' => $label]);
@@ -45,7 +46,7 @@ class ArrayField extends InputWidget
             .  Html::tag('em', '', [
                 'class' => 'glyphicon glyphicon-plus',
                 'style' => 'cursor:pointer',
-                'template' => (new ActiveForm())->field($this->model, $this->attribute . "[{{key}}]", [
+                'template' => $form->field($this->model, $this->attribute . "[{{key}}]", [
                     'template' => $template,
                 ])->label('{{key}}')->textInput(['placeholder' => '{{key}}']),
                 'onclick' => 'var $key = $(this).parent().prev().val(); if (!$key) return;
