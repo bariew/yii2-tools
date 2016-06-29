@@ -25,7 +25,7 @@ class FileDeleteAction extends Action
      */
     public function run($id, $name)
     {
-        /** @var \bariew\postModule\models\Item $model */
+        /** @var \bariew\postAbstractModule\models\Item $model */
         $model = $this->controller->findModel($id);
         if ($model->deleteFile($name)) {
             Yii::$app->session->setFlash('success', Yii::t('app', 'File successfully deleted'));
