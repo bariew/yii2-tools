@@ -50,6 +50,7 @@ class ArrayField extends InputWidget
                     'template' => $template,
                 ])->label('{{key}}')->textInput(['placeholder' => '{{key}}']),
                 'onclick' => 'var $key = $(this).parent().prev().val(); if (!$key) return;
+                    $(this).parent().prev().val("");
                     $(this).parents(".add").before($(this).attr("template").replace(/{{key}}/g, $key));'
             ])
             ."</div></div>";
