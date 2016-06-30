@@ -33,6 +33,7 @@ class SerializeBehavior extends Behavior
 
     public $attributes = [];
     public $type = self::TYPE_JSON;
+    public $directAccess = false;
 
     /**
      * @inheritdoc
@@ -111,4 +112,40 @@ class SerializeBehavior extends Behavior
     {
         return HtmlHelper::arrayPrettyPrint($this->labeledAttribute($attribute));
     }
+
+    public function __get($attribute)
+    {
+        if ($this->directAccess && $this->hasAttribute($attribute)) {
+            return $this->getAttribute($attribute);
+        }
+        return parent::__get($attribute);
+    }
+
+    public function canGetProperty($name, $checkVars = true)
+    {
+        return ($this->directAccess && $this->hasAttribute($name)) || parent::canGetProperty($name, $checkVars);
+    }
+
+    private function getAttribute($name)
+    {
+        foreach ($this->attributes as $attribute => $options) {
+            $attribute = is_array($options) ? $attribute : $options;
+            if (isset($this->owner->getAttribute($attribute)[$name])) {
+                return $this->owner->getAttribute($attribute)[$name];
+            }
+        }
+        return null;
+    }
+
+    private function hasAttribute($name)
+    {
+        foreach ($this->attributes as $attribute => $default) {
+            $attribute = is_array($default) ? $attribute : $default;
+            if (isset($this->owner->getAttribute($attribute)[$name]) || isset($default[$name])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
