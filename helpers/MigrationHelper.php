@@ -52,7 +52,7 @@ class MigrationHelper
      */
     public static function addForeignKey($table, $columns, $refTable, $refColumns, $delete = null, $update = null)
     {
-        $name = self::createForeignKeyName($table, $columns, $refTable);
+        $name = static::createForeignKeyName($table, $columns, $refTable);
         return Yii::$app->db->createCommand()->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update)->execute();
     }
 
@@ -67,7 +67,7 @@ class MigrationHelper
      */
     public static function dropForeignKey($table, $columns, $refTable, $refColumns)
     {
-        $name = self::createForeignKeyName($table, $columns, $refTable);
+        $name = static::createForeignKeyName($table, $columns, $refTable);
         $fks = Yii::$app->db->schema->getTableSchema($table)->foreignKeys;
         $search = array_merge([$refTable], array_combine((array)$columns, (array)$refColumns));
         if (!in_array($search, $fks)) {
@@ -167,7 +167,7 @@ class MigrationHelper
     {
         $result = ['inner' => [], 'outer' => []];
         foreach (Yii::$app->db->schema->tableSchemas as $table) {
-            $foreignKeys = self::findConstraints($table);
+            $foreignKeys = static::findConstraints($table);
             /** @var TableSchema $table */
             if ($table->name == $tableName) {
                 $result['inner'] = $foreignKeys;
@@ -190,7 +190,7 @@ class MigrationHelper
     protected static function findConstraints($table)
     {
         $result = [];
-        $sql = self::getCreateTableSql($table);
+        $sql = static::getCreateTableSql($table);
 
         $regexp = '/CONSTRAINT\s+([^\(^\s]+)\s*FOREIGN KEY\s+\(([^\)]+)\)\s+REFERENCES\s+([^\(^\s]+)\s*\(([^\)]+)\)/mi';
         if (preg_match_all($regexp, $sql, $matches, PREG_SET_ORDER)) {
@@ -229,4 +229,9 @@ class MigrationHelper
         return $sql;
     }
 
+
+    public static function columnType($table, $column)
+    {
+        return Yii::$app->db->getTableSchema($table)->getColumn($column)->dbType;
+    }
 }

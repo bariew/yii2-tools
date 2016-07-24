@@ -97,7 +97,9 @@ class CloneController extends Controller
         $destination = Yii::getAlias($this->destination);
         $destinationModuleName = $this->getDestinationModuleName();
         $counter = 0;
-        foreach (FileHelper::findFiles($destination) as $path) {
+        $files = FileHelper::findFiles($destination);
+        asort($files);
+        foreach ($files as $path) {
             if (!$this->replace && in_array($path, $this->keepFiles)) {
                 continue;
             }
