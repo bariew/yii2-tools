@@ -73,27 +73,18 @@ class CaptchaBehavior extends Behavior
     }
 
     /**
-     * @param \yii\widgets\ActiveForm|null $form
      * @return string
      * @throws \Exception
      */
-    public function getCaptchaWidget($form = null)
-    {
-        $options = [
-            'captchaAction' => $this->getCaptchaAction(),
-            'model' => $this->owner,
-            'attribute' => 'captcha',
-        ];
-        return $form
-            ? $form->field($this->owner, 'captcha')->widget(Captcha::className(), $options)
-            : Captcha::widget($options);
-    }
-
-    protected function getCaptchaAction()
+    public function getCaptchaOptions()
     {
         return [
-            '/'.Yii::$app->request->pathInfo,
-            $this->owner->formName().'[captcha]' => static::REQUEST_VALUE,
+            'captchaAction' => [
+                '/'.Yii::$app->request->pathInfo,
+                $this->owner->formName().'[captcha]' => static::REQUEST_VALUE,
+            ],
+            'model' => $this->owner,
+            'attribute' => 'captcha',
         ];
     }
 }
