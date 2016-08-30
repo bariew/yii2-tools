@@ -23,6 +23,7 @@ use yii\validators\RequiredValidator;
  */
 class CaptchaBehavior extends Behavior
 {
+    public $actionConfig = [];
     const REQUEST_VALUE = 'behaviorRequest';
     /**
      * @inheritdoc
@@ -45,7 +46,7 @@ class CaptchaBehavior extends Behavior
             && @Yii::$app->request->get($this->owner->formName())['captcha'] == static::REQUEST_VALUE
         ) {
             ob_end_clean();
-            echo (new CaptchaAction('captcha', Yii::$app->controller))->run();
+            echo (new CaptchaAction('captcha', Yii::$app->controller, $this->actionConfig))->run();
             Yii::$app->end();
         }
     }
@@ -58,7 +59,8 @@ class CaptchaBehavior extends Behavior
         }
         $this->setCaptcha(@Yii::$app->request->post($this->owner->formName())['captcha']);
         (new RequiredValidator())->validateAttribute($this->owner, 'captcha');
-        (new CaptchaValidator())->validateAttribute($this->owner, 'captcha');
+        (new CaptchaValidator(['actionConfig' => $this->actionConfig]))
+            ->validateAttribute($this->owner, 'captcha');
     }
 
     protected $_captcha;
