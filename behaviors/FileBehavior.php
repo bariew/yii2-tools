@@ -187,11 +187,11 @@ class FileBehavior extends Behavior
         }
         $storage = is_callable($this->storage)
             ? call_user_func($this->storage) : $this->storage;
-        $field = $field ? '_' . preg_replace('/[^-\w]+/', '', $field) : '';
+        $field = $field ? '_' . preg_replace('/[^\-\w]+/', '', $field) : '';
         return \Yii::getAlias(
             $storage 
             . '/' . $this->fileField . $field
-            . '/' . preg_replace('/[^\.-\w]+/', '', $name)
+            . '/' . preg_replace('/[^\.\-\w]+/', '', $name)
         );
     }
 
