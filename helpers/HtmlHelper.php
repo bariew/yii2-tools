@@ -208,4 +208,24 @@ class HtmlHelper
         }
         return array_combine(['module', 'controller', 'action'], $rule);
     }
+
+    /**
+     * @param string $content
+     * @param array $options
+     * @return string
+     */
+    public static function submitButton($content = 'Submit', $options = [])
+    {
+        Html::addCssStyle($options, ['opacity' => 1]);
+        return Html::beginTag('div', [
+                'onmouseenter' => <<<JS
+    if (!$(this).find('input').val()) {
+        $(this).find('button').removeAttr('disabled');
+    }
+JS
+            ])
+            . Html::hiddenInput('submit_button_security')
+            . Html::submitButton($content, array_merge($options, ['disabled' => true]))
+        . Html::endTag('div');
+    }
 }
